@@ -84,6 +84,32 @@ MetricKitProvider.shared.onDiagnosticPayloadsReceived = { summaries in
 }
 ```
 
+## 🎮 Showcase App
+
+Want to see ARCMetricsKit in action? Check out the **interactive showcase app**!
+
+The showcase app demonstrates:
+- Complete integration example
+- Real-time metrics visualization
+- Performance scenario simulators
+- Best practices implementation
+
+```bash
+cd Examples/ShowcaseApp
+open Package.swift
+```
+
+[**View Showcase README →**](Examples/ShowcaseApp/README.md)
+
+**Features:**
+- 📊 Dashboard with live metrics
+- 📝 Detailed metrics history
+- 🔨 Performance simulators (memory, CPU, hangs)
+- ⚙️ Settings and configuration
+- 📖 Interactive learning experience
+
+Perfect for understanding how MetricKit works before integrating into your production app!
+
 ## ⚠️ Important Notes
 
 - Metrics are delivered **every ~24 hours** (not real-time)
