@@ -6,26 +6,33 @@ import PackageDescription
 let package = Package(
     name: "ARCMetrics",
     platforms: [
-        .iOS(.v14),
-        .macOS(.v11),
-        .tvOS(.v14),
-        .watchOS(.v7)
+        .iOS(.v17),
+        .macOS(.v14),
+        .watchOS(.v10),
+        .visionOS(.v1)
     ],
     products: [
         .library(
-            name: "ARCMetrics",
-            targets: ["ARCMetrics"]
-        ),
+            name: "ARCMetricsKit",
+            targets: ["ARCMetricsKit"]
+        )
+    ],
+    dependencies: [
+        // ARCLogger - Local package de ARC Labs Studio
+        .package(path: "../ARCLogger")
     ],
     targets: [
         .target(
-            name: "ARCMetrics",
-            path: "Sources"
+            name: "ARCMetricsKit",
+            dependencies: [
+                .product(name: "ARCLogger", package: "ARCLogger")
+            ],
+            path: "Sources/ARCMetricsKit"
         ),
         .testTarget(
-            name: "ARCMetricsTests",
-            dependencies: ["ARCMetrics"],
-            path: "Tests"
+            name: "ARCMetricsKitTests",
+            dependencies: ["ARCMetricsKit"],
+            path: "Tests/ARCMetricsKitTests"
         )
     ]
 )
