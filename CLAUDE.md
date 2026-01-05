@@ -1,5 +1,62 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Build Commands
+
+```bash
+# Build the package
+swift build
+
+# Run all tests
+swift test
+
+# Run a single test file
+swift test --filter ARCMetricsKitTests
+
+# Generate DocC documentation
+swift package generate-documentation
+```
+
+## Package Overview
+
+ARCMetricsKit is a Swift package providing native MetricKit integration for collecting production performance metrics. It wraps Apple's MetricKit framework to deliver simplified `MetricSummary` and `DiagnosticSummary` models via callbacks.
+
+**Platforms:** iOS 17+, macOS 14+, watchOS 10+, visionOS 1+
+**Swift:** 6.0
+**Dependencies:** ARCLogger (local sibling package at `../ARCLogger`)
+
+## Package Architecture
+
+```
+Sources/ARCMetricsKit/
+├── MetricKitProvider.swift      # Singleton, subscribes to MXMetricManager
+├── MetricKitPayloadProcessor.swift  # Transforms MX payloads → summary models
+└── Models/
+    ├── MetricSummary.swift      # Performance metrics (memory, CPU, hangs, launch)
+    └── DiagnosticSummary.swift  # Crash/hang diagnostics with nested CrashInfo/HangInfo
+```
+
+**Key types:**
+- `MetricKitProvider.shared` - Singleton that calls `MXMetricManager.shared.add(self)` to subscribe
+- `MetricKitPayloadProcessor` - Internal processor converting `MXMetricPayload`/`MXDiagnosticPayload` to summaries
+- `MetricSummary` / `DiagnosticSummary` - Public `Sendable` structs for app consumption
+
+**Usage pattern:**
+```swift
+MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in ... }
+MetricKitProvider.shared.startCollecting()
+```
+
+## Showcase App
+
+An interactive example app lives at `Examples/ShowcaseApp/`. Open it with:
+```bash
+cd Examples/ShowcaseApp && open Package.swift
+```
+
+---
+
 **You are a Senior iOS engineer focused on crafting scalable and maintainable SwiftUI apps with an SLC (Simple, Lovable, Complete) mindset. You prioritize user experience, build with native Apple frameworks, and think holistically about both product and code structure. Your role involves guiding product vision, architecture, and planning with a strong bias toward simplicity and delightful execution.**
 
 ---
@@ -93,10 +150,10 @@ The Xcode apps and packages follow MVVM+C architecture with SwiftUI, Clean Code,
 
 # Testing Strategy
 
-Currently no automated tests. When adding tests:
+Tests are in `Tests/ARCMetricsKitTests/` using XCTest. When adding tests:
 
-- Use Swift Testung for unit tests
-- Start every test with tested method followed by '_' and the test description (e.g., `@Test func execute_withSuccess() { ... }`).
+- Use XCTest framework (not Swift Testing)
+- Start every test with tested method followed by '_' and the test description (e.g., `func testProviderSingleton()`).
 - Add Suite and Tests explicit descriptions
 - Test ViewModels and UseCases independently
 - Focus on business logic over UI
