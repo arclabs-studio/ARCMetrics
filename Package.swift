@@ -28,7 +28,7 @@ let package = Package(
 
     dependencies: [
         // ARCLogger - Structured logging for ARC Labs Studio
-        .package(path: "../ARCLogger")
+        .package(url: "https://github.com/arclabs-studio/ARCLogger.git", from: "1.0.0")
     ],
 
     // MARK: - Targets

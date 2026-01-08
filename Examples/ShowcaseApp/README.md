@@ -338,7 +338,7 @@ In your production app, you would typically:
 
 - **Main Package**: [../../README.md](../../README.md)
 - **ARCMetricsKit Docs**: [../../Sources/ARCMetricsKit/ARCMetricsKit.docc/](../../Sources/ARCMetricsKit/ARCMetricsKit.docc/)
-- **GitHub**: [https://github.com/arclabs/ARCMetrics](https://github.com/arclabs/ARCMetrics)
+- **GitHub**: [https://github.com/arclabs-studio/ARCMetrics](https://github.com/arclabs-studio/ARCMetrics)
 
 ---
 
