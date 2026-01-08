@@ -27,7 +27,8 @@ jobs:
 
       - name: Run SwiftLint
         run: |
-          swiftlint lint --config ARCDevTools/configs/swiftlint.yml Sources Tests --strict
+          cd $GITHUB_WORKSPACE
+          swiftlint lint --config ARCDevTools/configs/swiftlint.yml --strict .
 
   swiftformat:
     name: SwiftFormat
