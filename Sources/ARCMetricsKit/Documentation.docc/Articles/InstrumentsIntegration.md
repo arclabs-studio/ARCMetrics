@@ -68,6 +68,73 @@ Instruments: Firebase initialization taking 800ms
 Solution: Defer non-critical initialization
 ```
 
+### GPU Performance
+
+When ``MetricSummary/cumulativeGPUTimeSeconds`` is high:
+
+1. Open **Instruments** → **GPU Profiler** (Metal System Trace)
+2. Record during graphics-intensive operations
+3. Look for shader bottlenecks, overdraw, and memory bandwidth issues
+4. Use the GPU timeline to identify expensive render passes
+
+```
+MetricKit: GPU Time = 45s
+Instruments: Fragment shader running 3x per pixel (overdraw)
+Solution: Reduce overlapping transparent views, use opaque backgrounds
+```
+
+For non-Metal apps (Core Animation, UIKit):
+
+1. Open **Instruments** → **Core Animation**
+2. Enable **Color Blended Layers** and **Color Offscreen-Rendered**
+3. Red areas indicate expensive compositing
+4. Yellow areas show offscreen rendering
+
+> Tip: Use `layer.shouldRasterize = true` for complex but static content to cache GPU work.
+
+### Disk I/O Analysis
+
+When ``MetricSummary/cumulativeDiskWritesMB`` is excessive:
+
+1. Open **Instruments** → **File Activity**
+2. Record during typical app usage
+3. Filter by your app's process
+4. Look for frequent small writes vs. batched large writes
+
+```
+MetricKit: Disk Writes = 180 MB
+Instruments: 10,000 individual writes of 18KB each
+Solution: Batch writes using transactions, implement write coalescing
+```
+
+Common disk write offenders:
+- Unbatched Core Data saves
+- Logging to disk on every event
+- Cache writes without debouncing
+- Analytics events written synchronously
+
+### Scroll Hitch Investigation
+
+When ``MetricSummary/scrollHitchTimeRatio`` > 5%:
+
+1. Open **Instruments** → **Animation Hitches**
+2. Record while scrolling through your app
+3. Look for frames exceeding 16.67ms (60fps) or 8.33ms (120fps)
+4. Identify commit, render, and display phase delays
+
+```
+MetricKit: Scroll Hitch Ratio = 12%
+Instruments: Commit phase taking 45ms during cell appearance
+Solution: Pre-calculate cell heights, load images asynchronously
+```
+
+Alternative: Use **Core Animation** instrument with:
+- **Color Hits Green and Misses Red**: Shows rasterization cache efficiency
+- **Color Offscreen-Rendered Yellow**: Highlights expensive layer effects
+- **Flash Updated Regions**: Shows areas being redrawn
+
+> Important: Test scroll performance on older devices (e.g., iPhone 8) where hitches are more pronounced.
+
 ## Debug MetricKit Payloads
 
 ### Simulating Payloads in Xcode

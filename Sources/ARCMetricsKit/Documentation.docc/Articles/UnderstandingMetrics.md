@@ -87,6 +87,63 @@ summary.wifiUploadMB        // WiFi upload
 
 Monitor cellular usage carefully as users on limited data plans will notice excessive usage.
 
+### GPU Usage
+
+```swift
+summary.cumulativeGPUTimeSeconds // Total GPU time consumed
+```
+
+GPU time measures the total time your app spent executing GPU work. High values indicate graphics-intensive operations that impact battery life.
+
+| Value | Assessment | Impact |
+|-------|------------|--------|
+| < 1s | Minimal | Low battery impact |
+| 1-10s | Moderate | Noticeable for heavy usage |
+| 10-60s | High | Significant battery drain |
+| > 60s | Critical | Major power consumption |
+
+> Note: GPU metrics are particularly important for apps using Metal, SceneKit, RealityKit, or heavy Core Animation effects.
+
+### Disk I/O
+
+```swift
+summary.cumulativeDiskWritesMB // Total logical disk writes
+```
+
+Disk write activity affects device performance and battery life. Excessive writes can also contribute to flash storage wear.
+
+| Value | Assessment | Action |
+|-------|------------|--------|
+| < 10 MB | Excellent | Normal operation |
+| 10-50 MB | Moderate | Review write patterns |
+| 50-200 MB | High | Implement batching/caching |
+| > 200 MB | Excessive | Urgent optimization needed |
+
+> Tip: Consider batching writes, using write-ahead logging, and caching frequently-written data in memory before persisting.
+
+### Animation Performance
+
+```swift
+summary.scrollHitchTimeRatio // Scroll hitch time as percentage
+```
+
+A "hitch" occurs when a frame takes longer than expected to render during scrolling, causing visible stuttering. The ratio represents the percentage of scroll time that was affected by hitches.
+
+| Value | Assessment | User Experience |
+|-------|------------|-----------------|
+| < 1% | Excellent | Butter-smooth scrolling |
+| 1-5% | Good | Occasional micro-stutters |
+| 5-10% | Fair | Noticeable jank |
+| > 10% | Poor | Frustrating scroll experience |
+
+> Warning: Users are highly sensitive to scroll performance. Even small hitch ratios can affect perceived app quality. Target < 5% for a good experience.
+
+Common causes of scroll hitches:
+- Complex cell layouts being calculated on scroll
+- Image decoding on the main thread
+- Expensive shadow or corner radius rendering
+- Excessive view hierarchy depth
+
 ## Diagnostic Events
 
 ### Crashes

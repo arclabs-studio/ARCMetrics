@@ -92,6 +92,87 @@ For best results, test on a physical device:
 
 The Simulator provides limited MetricKit support. Use Xcode's **Debug → Simulate MetricKit Payload** for testing.
 
+## Testing with Dependency Injection
+
+ARCMetricsKit provides the ``MetricsProviding`` protocol for dependency injection, enabling you to write testable code and provide mock data for SwiftUI previews.
+
+### Using the Protocol
+
+Instead of referencing ``MetricKitProvider`` directly, depend on the protocol:
+
+```swift
+class MetricsViewModel: ObservableObject {
+    private let metricsProvider: MetricsProviding
+
+    init(metricsProvider: MetricsProviding = MetricKitProvider.shared) {
+        self.metricsProvider = metricsProvider
+        setupCallbacks()
+    }
+
+    private func setupCallbacks() {
+        metricsProvider.onMetricPayloadsReceived = { [weak self] summaries in
+            // Handle metrics
+        }
+    }
+}
+```
+
+### Creating a Mock for Tests
+
+Create a simple mock that conforms to `MetricsProviding`:
+
+```swift
+final class MockMetricsProvider: MetricsProviding, @unchecked Sendable {
+    var onMetricPayloadsReceived: (@Sendable ([MetricSummary]) -> Void)?
+    var onDiagnosticPayloadsReceived: (@Sendable ([DiagnosticSummary]) -> Void)?
+    var pastMetricSummaries: [MetricSummary] = []
+    var pastDiagnosticSummaries: [DiagnosticSummary] = []
+
+    func startCollecting() { }
+    func stopCollecting() { }
+
+    // Test helper
+    func simulateMetricPayload(_ summary: MetricSummary) {
+        pastMetricSummaries.append(summary)
+        onMetricPayloadsReceived?([summary])
+    }
+}
+```
+
+### Using Mocks in SwiftUI Previews
+
+```swift
+#Preview {
+    let mock = MockMetricsProvider()
+
+    // Create sample data
+    var summary = MetricSummary(timeRange: "Preview Data")
+    summary.peakMemoryUsageMB = 150.0
+    summary.averageCPUPercentage = 25.0
+    summary.cumulativeGPUTimeSeconds = 5.0
+    summary.scrollHitchTimeRatio = 2.5
+
+    mock.pastMetricSummaries = [summary]
+
+    return MetricsView(viewModel: MetricsViewModel(metricsProvider: mock))
+}
+```
+
+### Writing Unit Tests
+
+```swift
+func testMetricCallback() {
+    let mock = MockMetricsProvider()
+    let viewModel = MetricsViewModel(metricsProvider: mock)
+    var summary = MetricSummary(timeRange: "Test")
+    summary.peakMemoryUsageMB = 100.0
+
+    mock.simulateMetricPayload(summary)
+
+    XCTAssertEqual(viewModel.latestMetrics?.peakMemoryUsageMB, 100.0)
+}
+```
+
 ## Next Steps
 
 - Learn about the data you receive in <doc:UnderstandingMetrics>

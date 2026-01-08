@@ -13,10 +13,11 @@ MetricKit delivers aggregated reports approximately every 24 hours containing me
 ### Key Features
 
 - **Simplified API**: Easy-to-use callbacks for receiving metrics and diagnostics
-- **Comprehensive Metrics**: Memory, CPU, launch time, hangs, and network usage
+- **Comprehensive Metrics**: Memory, CPU, GPU, launch time, hangs, disk I/O, animation, and network usage
 - **Diagnostic Reports**: Crash and hang information with detailed context
 - **Privacy-Preserving**: No personally identifiable information collected
 - **Production-Ready**: Designed for real-world app monitoring
+- **Testable**: Includes `MetricsProviding` protocol for dependency injection and testing
 
 ### Quick Start
 
@@ -34,6 +35,9 @@ struct MyApp: App {
             for summary in summaries {
                 print("Peak Memory: \(summary.peakMemoryUsageMB) MB")
                 print("Avg CPU: \(summary.averageCPUPercentage)%")
+                print("GPU Time: \(summary.cumulativeGPUTimeSeconds)s")
+                print("Disk Writes: \(summary.cumulativeDiskWritesMB) MB")
+                print("Scroll Hitch: \(summary.scrollHitchTimeRatio)%")
             }
         }
 
@@ -61,12 +65,17 @@ struct MyApp: App {
 
 - <doc:GettingStarted>
 - ``MetricKitProvider``
+- ``MetricsProviding``
 
 ### Understanding Your Data
 
 - <doc:UnderstandingMetrics>
 - ``MetricSummary``
 - ``DiagnosticSummary``
+
+### Architecture
+
+- <doc:Architecture>
 
 ### Advanced Topics
 
