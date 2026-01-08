@@ -66,6 +66,21 @@ final class MetricKitPayloadProcessor {
             summary.wifiUploadMB = formatBytes(network.cumulativeWifiUpload)
         }
 
+        // GPU metrics
+        if let gpu = payload.gpuMetrics {
+            summary.cumulativeGPUTimeSeconds = gpu.cumulativeGPUTime.converted(to: .seconds).value
+        }
+
+        // Disk I/O metrics
+        if let diskIO = payload.diskIOMetrics {
+            summary.cumulativeDiskWritesMB = formatBytes(diskIO.cumulativeLogicalWrites)
+        }
+
+        // Animation metrics
+        if let animation = payload.animationMetrics {
+            summary.scrollHitchTimeRatio = animation.scrollHitchTimeRatio.value * 100
+        }
+
         logger.debug("Processed metric payload for range: \(summary.timeRange)")
 
         return summary

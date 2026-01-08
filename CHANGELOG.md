@@ -14,10 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git hooks for pre-commit and pre-push checks
 - Documentation.docc catalog with comprehensive guides
 - Claude Code skills for package validation
+- `MetricsProviding` protocol for dependency injection and testing
+- `pastMetricSummaries` and `pastDiagnosticSummaries` for historical data access
+- `Codable` conformance to `MetricSummary` and `DiagnosticSummary`
+- `Equatable` and `Hashable` conformance to all models
+- `cumulativeGPUTimeSeconds` metric for GPU performance tracking
+- `cumulativeDiskWritesMB` metric for disk I/O monitoring
+- `scrollHitchTimeRatio` metric for animation performance analysis
+- `MockMetricsProvider` for comprehensive testing support
+- Reorganized test structure with Unit/ and Helpers/Mocks/ directories
+- `MetricSummaryTests` with 11 comprehensive tests
+- `DiagnosticSummaryTests` with 12 tests including Codable/Equatable/Hashable
+- `MetricKitProviderTests` with 10 tests for singleton and protocol conformance
+- `MockMetricsProviderTests` with 16 tests covering all mock functionality
 
 ### Changed
 - Updated Package.swift with Swift 6 strict concurrency settings
 - Improved code organization following ARCKnowledge standards
+- `MetricKitProvider` now conforms to `MetricsProviding` protocol
+- Callbacks now marked as `@Sendable` for Swift 6 concurrency safety
+- `MetricKitPayloadProcessor` now extracts GPU, disk, and animation metrics
 
 ## [0.1.0] - 2025-01-05
 

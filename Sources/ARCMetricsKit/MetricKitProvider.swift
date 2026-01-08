@@ -14,6 +14,12 @@ import MetricKit
 /// `MetricKitProvider` is a singleton that subscribes to MetricKit's metric and diagnostic payloads.
 /// It processes raw MetricKit data and provides simplified summaries through callbacks.
 ///
+/// ## Overview
+///
+/// Use ``MetricKitProvider`` to receive performance metrics and diagnostics from Apple's MetricKit
+/// framework. The provider handles subscription management and transforms raw payloads into
+/// easy-to-use ``MetricSummary`` and ``DiagnosticSummary`` objects.
+///
 /// ## Topics
 ///
 /// ### Getting Started
@@ -25,10 +31,14 @@ import MetricKit
 /// - ``onMetricPayloadsReceived``
 /// - ``onDiagnosticPayloadsReceived``
 ///
+/// ### Historical Data
+/// - ``pastMetricSummaries``
+/// - ``pastDiagnosticSummaries``
+///
 /// ### Understanding the Data
 /// - <doc:UnderstandingMetrics>
 /// - <doc:InstrumentsIntegration>
-public final class MetricKitProvider: NSObject, @unchecked Sendable {
+public final class MetricKitProvider: NSObject, @unchecked Sendable, MetricsProviding {
     // MARK: - Singleton
 
     /// Shared singleton instance of the MetricKit provider.
@@ -78,6 +88,40 @@ public final class MetricKitProvider: NSObject, @unchecked Sendable {
     /// }
     /// ```
     public var onDiagnosticPayloadsReceived: (@Sendable ([DiagnosticSummary]) -> Void)?
+
+    /// Returns previously received metric summaries from MetricKit's historical data.
+    ///
+    /// This property accesses `MXMetricManager.pastPayloads` and transforms them into
+    /// ``MetricSummary`` objects. Use this to retrieve metrics that were collected
+    /// before your callbacks were registered.
+    ///
+    /// ```swift
+    /// let historicalMetrics = MetricKitProvider.shared.pastMetricSummaries
+    /// for summary in historicalMetrics {
+    ///     print("Historical peak memory: \(summary.peakMemoryUsageMB) MB")
+    /// }
+    /// ```
+    public var pastMetricSummaries: [MetricSummary] {
+        MXMetricManager.shared.pastPayloads.compactMap { payload in
+            processor.processMetricPayload(payload)
+        }
+    }
+
+    /// Returns previously received diagnostic summaries from MetricKit's historical data.
+    ///
+    /// This property accesses `MXMetricManager.pastDiagnosticPayloads` and transforms them
+    /// into ``DiagnosticSummary`` objects. Use this to retrieve diagnostics that were
+    /// collected before your callbacks were registered.
+    ///
+    /// ```swift
+    /// let historicalDiagnostics = MetricKitProvider.shared.pastDiagnosticSummaries
+    /// let totalCrashes = historicalDiagnostics.reduce(0) { $0 + $1.crashCount }
+    /// ```
+    public var pastDiagnosticSummaries: [DiagnosticSummary] {
+        MXMetricManager.shared.pastDiagnosticPayloads.compactMap { payload in
+            processor.processDiagnosticPayload(payload)
+        }
+    }
 
     // MARK: - Initialization
 
