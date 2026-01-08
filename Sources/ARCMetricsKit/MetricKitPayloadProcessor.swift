@@ -7,14 +7,21 @@
 
 import ARCLogger
 import Foundation
+
+#if os(iOS) || os(visionOS)
 import MetricKit
+#endif
 
 /// Processes raw MetricKit payloads into simplified summary models.
 ///
 /// This internal class handles the complex MetricKit API and extracts the most
 /// relevant metrics into easy-to-use `MetricSummary` and `DiagnosticSummary` objects.
+///
+/// - Note: MetricKit is only available on iOS and visionOS.
 final class MetricKitPayloadProcessor {
     private let logger = ARCLogger(category: "MetricKitProcessor")
+
+    #if os(iOS) || os(visionOS)
 
     // MARK: - Metric Payload Processing
 
@@ -142,6 +149,22 @@ final class MetricKitPayloadProcessor {
 
     // MARK: - Helpers
 
+    private func calculateHistogramAverage(_ histogram: MXHistogram<UnitDuration>) -> Double {
+        var totalTime: Double = 0
+        var totalCount = 0
+
+        for bucket in histogram.bucketEnumerator {
+            if let bucket = bucket as? MXHistogramBucket<UnitDuration> {
+                let bucketValue = bucket.bucketStart.converted(to: .seconds).value
+                totalTime += bucketValue * Double(bucket.bucketCount)
+                totalCount += bucket.bucketCount
+            }
+        }
+
+        return totalCount > 0 ? totalTime / Double(totalCount) : 0
+    }
+    #endif
+
     private func formatDateRange(start: Date, end: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -157,25 +180,11 @@ final class MetricKitPayloadProcessor {
         guard let measurement else { return 0 }
         return measurement.converted(to: .megabytes).value
     }
-
-    private func calculateHistogramAverage(_ histogram: MXHistogram<UnitDuration>) -> Double {
-        var totalTime: Double = 0
-        var totalCount = 0
-
-        for bucket in histogram.bucketEnumerator {
-            if let bucket = bucket as? MXHistogramBucket<UnitDuration> {
-                let bucketValue = bucket.bucketStart.converted(to: .seconds).value
-                totalTime += bucketValue * Double(bucket.bucketCount)
-                totalCount += bucket.bucketCount
-            }
-        }
-
-        return totalCount > 0 ? totalTime / Double(totalCount) : 0
-    }
 }
 
 // MARK: - MXHistogram Extension
 
+#if os(iOS) || os(visionOS)
 extension MXHistogram where UnitType == UnitDuration {
     /// Calculates the total weighted count from all histogram buckets.
     fileprivate var totalBucketCountsValue: Double {
@@ -188,3 +197,4 @@ extension MXHistogram where UnitType == UnitDuration {
         return total
     }
 }
+#endif

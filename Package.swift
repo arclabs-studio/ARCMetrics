@@ -8,10 +8,11 @@ let package = Package(
 
     // MARK: - Platforms
 
+    // Note: MetricKit is only available on iOS and visionOS.
+    // macOS is included for development tooling compatibility only.
     platforms: [
         .iOS(.v17),
         .macOS(.v14),
-        .watchOS(.v10),
         .visionOS(.v1)
     ],
 

@@ -126,9 +126,9 @@ swift test
 ## 📱 Platform Support
 
 - iOS 17+
-- macOS 14+
-- watchOS 10+
 - visionOS 1+
+
+> **Note**: MetricKit is not available on macOS, watchOS, or tvOS.
 
 ## 📄 License
 

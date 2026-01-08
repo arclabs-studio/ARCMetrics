@@ -22,7 +22,7 @@ swift package generate-documentation
 
 ARCMetricsKit is a Swift package providing native MetricKit integration for collecting production performance metrics. It wraps Apple's MetricKit framework to deliver simplified `MetricSummary` and `DiagnosticSummary` models via callbacks.
 
-**Platforms:** iOS 17+, macOS 14+, watchOS 10+, visionOS 1+
+**Platforms:** iOS 17+, visionOS 1+ (MetricKit is not available on macOS/watchOS/tvOS)
 **Swift:** 6.0
 **Dependencies:** ARCLogger (local sibling package at `../ARCLogger`)
 

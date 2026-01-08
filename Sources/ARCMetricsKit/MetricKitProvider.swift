@@ -7,7 +7,10 @@
 
 import ARCLogger
 import Foundation
+
+#if os(iOS) || os(visionOS)
 import MetricKit
+#endif
 
 /// Provider that manages MetricKit data collection for technical app metrics.
 ///
@@ -101,10 +104,16 @@ public final class MetricKitProvider: NSObject, @unchecked Sendable, MetricsProv
     ///     print("Historical peak memory: \(summary.peakMemoryUsageMB) MB")
     /// }
     /// ```
+    ///
+    /// - Note: Returns empty array on macOS (MetricKit unavailable).
     public var pastMetricSummaries: [MetricSummary] {
-        MXMetricManager.shared.pastPayloads.compactMap { payload in
+        #if os(iOS) || os(visionOS)
+        return MXMetricManager.shared.pastPayloads.compactMap { payload in
             processor.processMetricPayload(payload)
         }
+        #else
+        return []
+        #endif
     }
 
     /// Returns previously received diagnostic summaries from MetricKit's historical data.
@@ -117,10 +126,16 @@ public final class MetricKitProvider: NSObject, @unchecked Sendable, MetricsProv
     /// let historicalDiagnostics = MetricKitProvider.shared.pastDiagnosticSummaries
     /// let totalCrashes = historicalDiagnostics.reduce(0) { $0 + $1.crashCount }
     /// ```
+    ///
+    /// - Note: Returns empty array on macOS (MetricKit unavailable).
     public var pastDiagnosticSummaries: [DiagnosticSummary] {
-        MXMetricManager.shared.pastDiagnosticPayloads.compactMap { payload in
+        #if os(iOS) || os(visionOS)
+        return MXMetricManager.shared.pastDiagnosticPayloads.compactMap { payload in
             processor.processDiagnosticPayload(payload)
         }
+        #else
+        return []
+        #endif
     }
 
     // MARK: - Initialization
@@ -147,23 +162,35 @@ public final class MetricKitProvider: NSObject, @unchecked Sendable, MetricsProv
     ///
     /// - Important: You must call this method to begin receiving metric payloads.
     ///              MetricKit will not deliver data unless you subscribe.
+    /// - Note: No-op on macOS (MetricKit unavailable).
     public func startCollecting() {
+        #if os(iOS) || os(visionOS)
         MXMetricManager.shared.add(self)
         logger.info("MetricKit collection started")
+        #else
+        logger.warning("MetricKit is not available on this platform")
+        #endif
     }
 
     /// Stops collecting metrics from MetricKit.
     ///
     /// Call this method if you need to temporarily pause metric collection.
     /// This is rarely needed in production apps.
+    ///
+    /// - Note: No-op on macOS (MetricKit unavailable).
     public func stopCollecting() {
+        #if os(iOS) || os(visionOS)
         MXMetricManager.shared.remove(self)
         logger.info("MetricKit collection stopped")
+        #else
+        logger.warning("MetricKit is not available on this platform")
+        #endif
     }
 }
 
 // MARK: - MXMetricManagerSubscriber
 
+#if os(iOS) || os(visionOS)
 extension MetricKitProvider: MXMetricManagerSubscriber {
     /// Receives metric payloads from MetricKit (memory, CPU, battery, etc.)
     public func didReceive(_ payloads: [MXMetricPayload]) {
@@ -222,3 +249,4 @@ extension MetricKitProvider: MXMetricManagerSubscriber {
         """)
     }
 }
+#endif
