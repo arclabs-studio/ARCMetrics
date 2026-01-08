@@ -67,6 +67,39 @@ struct SimulatorsView: View {
                     Text("Performance Scenarios")
                 }
 
+                Section {
+                    SimulatorButton(
+                        title: "GPU Intensive Work",
+                        icon: "gpu",
+                        color: .cyan,
+                        description: "Performs graphics-intensive operations"
+                    ) {
+                        simulateGPUWork()
+                    }
+
+                    SimulatorButton(
+                        title: "Disk Write Activity",
+                        icon: "externaldrive.fill",
+                        color: .indigo,
+                        description: "Writes data to disk repeatedly"
+                    ) {
+                        simulateDiskWrites()
+                    }
+
+                    SimulatorButton(
+                        title: "Scroll Hitch Generator",
+                        icon: "scroll.fill",
+                        color: .pink,
+                        description: "Creates scroll performance issues"
+                    ) {
+                        simulateScrollHitches()
+                    }
+                } header: {
+                    Text("New Metrics Scenarios")
+                } footer: {
+                    Text("These scenarios help test GPU, disk I/O, and animation metrics added in ARCMetricsKit.")
+                }
+
                 if !simulationStatus.isEmpty {
                     Section {
                         Text(simulationStatus)
@@ -256,6 +289,113 @@ struct SimulatorsView: View {
                 simulationStatus = "✅ Network simulation completed in \(String(format: "%.1f", duration))s\nSuccessful: \(successCount), Failed: \(failureCount)"
                 isSimulating = false
             }
+        }
+    }
+
+    private func simulateGPUWork() {
+        isSimulating = true
+        simulationStatus = "Starting GPU-intensive simulation..."
+
+        Task { @MainActor in
+            let start = Date()
+
+            // Simulate GPU work by creating many layers with effects
+            // In a real app, this would use Metal or heavy Core Animation
+            for i in 0 ..< 100 {
+                // Create work that would typically involve GPU
+                // Heavy math operations that might get vectorized
+                var result: Double = 0
+                for j in 0 ..< 100_000 {
+                    result += sin(Double(j) * 0.001) * cos(Double(j) * 0.001)
+                }
+                _ = result // Prevent optimization
+
+                if i % 20 == 0 {
+                    simulationStatus = "GPU work batch \(i / 20 + 1)/5..."
+                    // Allow UI to update
+                    try? await Task.sleep(for: .milliseconds(10))
+                }
+            }
+
+            let duration = Date().timeIntervalSince(start)
+            simulationStatus = "✅ GPU simulation completed in \(String(format: "%.1f", duration))s\nNote: Real GPU usage requires Metal or heavy graphics"
+            isSimulating = false
+        }
+    }
+
+    private func simulateDiskWrites() {
+        isSimulating = true
+        simulationStatus = "Starting disk write simulation..."
+
+        Task {
+            let start = Date()
+            let fileManager = FileManager.default
+            let tempDir = fileManager.temporaryDirectory
+
+            var totalBytesWritten = 0
+
+            // Write multiple files to disk
+            for i in 0 ..< 50 {
+                let fileName = "arcmetrics_test_\(i).dat"
+                let fileURL = tempDir.appendingPathComponent(fileName)
+
+                // Create random data (100KB per file)
+                let dataSize = 100 * 1024
+                let data = Data((0 ..< dataSize).map { _ in UInt8.random(in: 0 ... 255) })
+
+                do {
+                    try data.write(to: fileURL)
+                    totalBytesWritten += dataSize
+
+                    // Clean up immediately
+                    try? fileManager.removeItem(at: fileURL)
+                } catch {
+                    print("Disk write error: \(error)")
+                }
+
+                await MainActor.run {
+                    simulationStatus = "Writing file \(i + 1)/50..."
+                }
+
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+
+            let duration = Date().timeIntervalSince(start)
+            let mbWritten = Double(totalBytesWritten) / (1024 * 1024)
+
+            await MainActor.run {
+                simulationStatus = "✅ Disk simulation completed in \(String(format: "%.1f", duration))s\nWrote \(String(format: "%.1f", mbWritten)) MB to disk"
+                isSimulating = false
+            }
+        }
+    }
+
+    private func simulateScrollHitches() {
+        isSimulating = true
+        simulationStatus = "Starting scroll hitch simulation..."
+
+        Task { @MainActor in
+            let start = Date()
+
+            // Simulate what would cause scroll hitches
+            // Heavy main thread work during "scroll"
+            for i in 0 ..< 20 {
+                // Simulate expensive layout calculations
+                var result: Double = 0
+                for j in 0 ..< 500_000 {
+                    result += Double(j).squareRoot()
+                }
+                _ = result
+
+                // Brief sleep between "frames"
+                Thread.sleep(forTimeInterval: 0.05)
+
+                simulationStatus = "Simulating frame \(i + 1)/20 (creating hitches)..."
+            }
+
+            let duration = Date().timeIntervalSince(start)
+            simulationStatus = "✅ Scroll hitch simulation completed in \(String(format: "%.1f", duration))s\nCreated ~20 potential hitch events"
+            isSimulating = false
         }
     }
 }

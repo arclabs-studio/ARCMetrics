@@ -137,6 +137,24 @@ struct LatestMetricsCard: View {
                 value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s"
             )
 
+            Divider()
+
+            MetricRow(
+                icon: "gpu",
+                label: "GPU Time",
+                value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
+            )
+            MetricRow(
+                icon: "externaldrive",
+                label: "Disk Writes",
+                value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB"
+            )
+            MetricRow(
+                icon: "scroll",
+                label: "Scroll Hitch",
+                value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%"
+            )
+
             Text("Time Range: \(summary.timeRange)")
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -221,7 +239,12 @@ struct MetricRow: View {
     }
 }
 
-#Preview {
+#Preview("With Data") {
     ContentView()
-        .environmentObject(MetricsViewModel())
+        .environmentObject(MetricsViewModel.preview)
+}
+
+#Preview("Empty State") {
+    ContentView()
+        .environmentObject(MetricsViewModel.emptyPreview)
 }

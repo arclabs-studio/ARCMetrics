@@ -89,14 +89,16 @@ struct MetricsListView: View {
                             .padding()
                     }
                     .navigationTitle("Export")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") {
-                                showingExportSheet = false
+                    #if os(iOS)
+                        .navigationBarTitleDisplayMode(.inline)
+                    #endif
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") {
+                                    showingExportSheet = false
+                                }
                             }
                         }
-                    }
                 }
             }
         }
@@ -214,6 +216,27 @@ struct MetricDetailView: View {
                 )
             }
 
+            Section("GPU") {
+                DetailRow(
+                    label: "Cumulative GPU Time",
+                    value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
+                )
+            }
+
+            Section("Disk I/O") {
+                DetailRow(
+                    label: "Disk Writes",
+                    value: "\(String(format: "%.2f", summary.cumulativeDiskWritesMB)) MB"
+                )
+            }
+
+            Section("Animation") {
+                DetailRow(
+                    label: "Scroll Hitch Ratio",
+                    value: "\(String(format: "%.2f", summary.scrollHitchTimeRatio))%"
+                )
+            }
+
             Section("Responsiveness") {
                 DetailRow(label: "Total Hang Time", value: "\(String(format: "%.3f", summary.totalHangTimeSeconds))s")
                 DetailRow(label: "Launch Time", value: "\(String(format: "%.3f", summary.averageLaunchTimeSeconds))s")
@@ -232,7 +255,9 @@ struct MetricDetailView: View {
             }
         }
         .navigationTitle("Metric #\(index + 1)")
-        .navigationBarTitleDisplayMode(.inline)
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -285,7 +310,9 @@ struct DiagnosticDetailView: View {
             }
         }
         .navigationTitle("Diagnostic #\(index + 1)")
-        .navigationBarTitleDisplayMode(.inline)
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -305,7 +332,24 @@ struct DetailRow: View {
     }
 }
 
-#Preview {
+#Preview("With Data") {
     MetricsListView()
-        .environmentObject(MetricsViewModel())
+        .environmentObject(MetricsViewModel.preview)
+}
+
+#Preview("Empty State") {
+    MetricsListView()
+        .environmentObject(MetricsViewModel.emptyPreview)
+}
+
+#Preview("Metric Detail") {
+    NavigationStack {
+        MetricDetailView(summary: PreviewData.sampleMetricSummary(), index: 0)
+    }
+}
+
+#Preview("Diagnostic Detail") {
+    NavigationStack {
+        DiagnosticDetailView(summary: PreviewData.sampleDiagnosticSummary(), index: 0)
+    }
 }

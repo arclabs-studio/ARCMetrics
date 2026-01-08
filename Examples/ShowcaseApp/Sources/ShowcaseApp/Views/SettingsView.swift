@@ -204,6 +204,9 @@ struct AboutView: View {
 
                     MetricTypeRow(icon: "memorychip", title: "Memory", description: "Peak & average usage")
                     MetricTypeRow(icon: "cpu", title: "CPU", description: "Utilization percentage")
+                    MetricTypeRow(icon: "gpu", title: "GPU", description: "Graphics processing time")
+                    MetricTypeRow(icon: "externaldrive", title: "Disk I/O", description: "Write activity")
+                    MetricTypeRow(icon: "scroll", title: "Animation", description: "Scroll hitch ratio")
                     MetricTypeRow(icon: "hourglass", title: "Hangs", description: "UI freeze time")
                     MetricTypeRow(icon: "timer", title: "Launches", description: "Time to first frame")
                     MetricTypeRow(icon: "network", title: "Network", description: "Cellular & WiFi usage")
@@ -227,7 +230,9 @@ struct AboutView: View {
             .padding()
         }
         .navigationTitle("About")
-        .navigationBarTitleDisplayMode(.inline)
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -285,7 +290,13 @@ struct MetricTypeRow: View {
     }
 }
 
-#Preview {
+#Preview("With Data") {
     SettingsView()
-        .environmentObject(MetricsViewModel())
+        .environmentObject(MetricsViewModel.preview)
+}
+
+#Preview("About") {
+    NavigationStack {
+        AboutView()
+    }
 }

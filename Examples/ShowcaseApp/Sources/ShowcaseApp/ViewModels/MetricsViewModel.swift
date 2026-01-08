@@ -144,6 +144,9 @@ final class MetricsViewModel: ObservableObject {
         - Time Range: \(summary.timeRange)
         - Peak Memory: \(String(format: "%.1f", summary.peakMemoryUsageMB)) MB
         - Avg CPU: \(String(format: "%.1f", summary.averageCPUPercentage))%
+        - GPU Time: \(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s
+        - Disk Writes: \(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB
+        - Scroll Hitch: \(String(format: "%.1f", summary.scrollHitchTimeRatio))%
         - Hang Time: \(String(format: "%.2f", summary.totalHangTimeSeconds))s
         - Launch Time: \(String(format: "%.2f", summary.averageLaunchTimeSeconds))s
         """)
