@@ -1,3 +1,10 @@
+//
+//  MetricSummary.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
 import Foundation
 
 /// A simplified summary of technical performance metrics collected by MetricKit.
@@ -29,7 +36,6 @@ import Foundation
 /// - ``wifiDownloadMB``
 /// - ``wifiUploadMB``
 public struct MetricSummary: Sendable {
-
     // MARK: - Properties
 
     /// Time range covered by this metric summary.
@@ -146,11 +152,17 @@ extension MetricSummary: CustomStringConvertible {
         """
         MetricSummary(
           timeRange: \(timeRange)
-          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(format: "%.1f", averageMemoryUsageMB))MB
+          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(
+              format: "%.1f",
+              averageMemoryUsageMB
+          ))MB
           cpu: \(String(format: "%.1f", averageCPUPercentage))%
           hangs: \(String(format: "%.2f", totalHangTimeSeconds))s
           launch: \(String(format: "%.2f", averageLaunchTimeSeconds))s
-          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(format: "%.1f", cellularUploadMB))MB↑
+          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(
+              format: "%.1f",
+              cellularUploadMB
+          ))MB↑
         )
         """
     }

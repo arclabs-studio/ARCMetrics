@@ -1,5 +1,5 @@
-import SwiftUI
 import ARCMetricsKit
+import SwiftUI
 
 /// ARCMetrics Showcase App
 ///

@@ -1,6 +1,13 @@
+//
+//  MetricKitProvider.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
+import ARCLogger
 import Foundation
 import MetricKit
-import ARCLogger
 
 /// Provider that manages MetricKit data collection for technical app metrics.
 ///
@@ -21,8 +28,7 @@ import ARCLogger
 /// ### Understanding the Data
 /// - <doc:UnderstandingMetrics>
 /// - <doc:InstrumentsIntegration>
-public final class MetricKitProvider: NSObject {
-
+public final class MetricKitProvider: NSObject, @unchecked Sendable {
     // MARK: - Singleton
 
     /// Shared singleton instance of the MetricKit provider.
@@ -55,7 +61,7 @@ public final class MetricKitProvider: NSObject {
     ///
     /// - Note: Payloads are delivered asynchronously by the system and may not arrive
     ///         immediately after app launch.
-    public var onMetricPayloadsReceived: (([MetricSummary]) -> Void)?
+    public var onMetricPayloadsReceived: (@Sendable ([MetricSummary]) -> Void)?
 
     /// Callback invoked when diagnostic payloads are received from MetricKit.
     ///
@@ -71,11 +77,11 @@ public final class MetricKitProvider: NSObject {
     ///     }
     /// }
     /// ```
-    public var onDiagnosticPayloadsReceived: (([DiagnosticSummary]) -> Void)?
+    public var onDiagnosticPayloadsReceived: (@Sendable ([DiagnosticSummary]) -> Void)?
 
     // MARK: - Initialization
 
-    private override init() {
+    override private init() {
         super.init()
     }
 
@@ -115,7 +121,6 @@ public final class MetricKitProvider: NSObject {
 // MARK: - MXMetricManagerSubscriber
 
 extension MetricKitProvider: MXMetricManagerSubscriber {
-
     /// Receives metric payloads from MetricKit (memory, CPU, battery, etc.)
     public func didReceive(_ payloads: [MXMetricPayload]) {
         logger.info("Received \(payloads.count) metric payload(s)")
@@ -154,22 +159,22 @@ extension MetricKitProvider: MXMetricManagerSubscriber {
 
     private func logMetricSummary(_ summary: MetricSummary) {
         logger.info("""
-            📊 Metric Summary:
-            - Time Range: \(summary.timeRange)
-            - Peak Memory: \(summary.peakMemoryUsageMB) MB
-            - Avg CPU: \(summary.averageCPUPercentage)%
-            - Hang Time: \(summary.totalHangTimeSeconds)s
-            - Launch Time: \(summary.averageLaunchTimeSeconds)s
-            """)
+        Metric Summary:
+        - Time Range: \(summary.timeRange)
+        - Peak Memory: \(summary.peakMemoryUsageMB) MB
+        - Avg CPU: \(summary.averageCPUPercentage)%
+        - Hang Time: \(summary.totalHangTimeSeconds)s
+        - Launch Time: \(summary.averageLaunchTimeSeconds)s
+        """)
     }
 
     private func logDiagnosticSummary(_ summary: DiagnosticSummary) {
         logger.error("""
-            🔴 Diagnostic Summary:
-            - Time Range: \(summary.timeRange)
-            - Crashes: \(summary.crashCount)
-            - Hangs: \(summary.hangCount)
-            - Disk Write Exceptions: \(summary.diskWriteExceptionCount)
-            """)
+        Diagnostic Summary:
+        - Time Range: \(summary.timeRange)
+        - Crashes: \(summary.crashCount)
+        - Hangs: \(summary.hangCount)
+        - Disk Write Exceptions: \(summary.diskWriteExceptionCount)
+        """)
     }
 }

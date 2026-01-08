@@ -1,3 +1,10 @@
+//
+//  DiagnosticSummary.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
 import Foundation
 
 /// A summary of diagnostic events collected by MetricKit.
@@ -21,7 +28,6 @@ import Foundation
 /// - ``diskWriteExceptionCount``
 /// - ``cpuExceptionCount``
 public struct DiagnosticSummary: Sendable {
-
     // MARK: - Properties
 
     /// Time range covered by this diagnostic summary.

@@ -1,5 +1,5 @@
-import SwiftUI
 import ARCMetricsKit
+import SwiftUI
 
 /// View that displays a list of all received metrics
 struct MetricsListView: View {
@@ -197,12 +197,21 @@ struct MetricDetailView: View {
 
             Section("Memory") {
                 DetailRow(label: "Peak Memory", value: "\(String(format: "%.2f", summary.peakMemoryUsageMB)) MB")
-                DetailRow(label: "Average Suspended", value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB")
+                DetailRow(
+                    label: "Average Suspended",
+                    value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB"
+                )
             }
 
             Section("CPU") {
-                DetailRow(label: "Cumulative Time", value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s")
-                DetailRow(label: "Average Percentage", value: "\(String(format: "%.2f", summary.averageCPUPercentage))%")
+                DetailRow(
+                    label: "Cumulative Time",
+                    value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s"
+                )
+                DetailRow(
+                    label: "Average Percentage",
+                    value: "\(String(format: "%.2f", summary.averageCPUPercentage))%"
+                )
             }
 
             Section("Responsiveness") {

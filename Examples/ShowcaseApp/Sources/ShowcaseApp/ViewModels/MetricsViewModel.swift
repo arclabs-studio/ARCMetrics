@@ -1,10 +1,9 @@
-import SwiftUI
 import ARCMetricsKit
+import SwiftUI
 
 /// ViewModel that manages metrics state and handles MetricKit callbacks
 @MainActor
 final class MetricsViewModel: ObservableObject {
-
     // MARK: - Published Properties
 
     @Published var metricSummaries: [MetricSummary] = []
@@ -44,7 +43,7 @@ final class MetricsViewModel: ObservableObject {
         // Register callback for performance metrics
         MetricKitProvider.shared.onMetricPayloadsReceived = { [weak self] summaries in
             Task { @MainActor in
-                guard let self = self else { return }
+                guard let self else { return }
 
                 print("📊 Received \(summaries.count) metric payload(s)")
 
@@ -69,7 +68,7 @@ final class MetricsViewModel: ObservableObject {
         // Register callback for diagnostic events
         MetricKitProvider.shared.onDiagnosticPayloadsReceived = { [weak self] summaries in
             Task { @MainActor in
-                guard let self = self else { return }
+                guard let self else { return }
 
                 print("🔴 Received \(summaries.count) diagnostic payload(s)")
 
@@ -141,23 +140,23 @@ final class MetricsViewModel: ObservableObject {
 
     private func logMetricSummary(_ summary: MetricSummary) {
         print("""
-            📊 Metric Summary:
-            - Time Range: \(summary.timeRange)
-            - Peak Memory: \(String(format: "%.1f", summary.peakMemoryUsageMB)) MB
-            - Avg CPU: \(String(format: "%.1f", summary.averageCPUPercentage))%
-            - Hang Time: \(String(format: "%.2f", summary.totalHangTimeSeconds))s
-            - Launch Time: \(String(format: "%.2f", summary.averageLaunchTimeSeconds))s
-            """)
+        📊 Metric Summary:
+        - Time Range: \(summary.timeRange)
+        - Peak Memory: \(String(format: "%.1f", summary.peakMemoryUsageMB)) MB
+        - Avg CPU: \(String(format: "%.1f", summary.averageCPUPercentage))%
+        - Hang Time: \(String(format: "%.2f", summary.totalHangTimeSeconds))s
+        - Launch Time: \(String(format: "%.2f", summary.averageLaunchTimeSeconds))s
+        """)
     }
 
     private func logDiagnosticSummary(_ summary: DiagnosticSummary) {
         print("""
-            🔴 Diagnostic Summary:
-            - Time Range: \(summary.timeRange)
-            - Crashes: \(summary.crashCount)
-            - Hangs: \(summary.hangCount)
-            - Disk Write Exceptions: \(summary.diskWriteExceptionCount)
-            - CPU Exceptions: \(summary.cpuExceptionCount)
-            """)
+        🔴 Diagnostic Summary:
+        - Time Range: \(summary.timeRange)
+        - Crashes: \(summary.crashCount)
+        - Hangs: \(summary.hangCount)
+        - Disk Write Exceptions: \(summary.diskWriteExceptionCount)
+        - CPU Exceptions: \(summary.cpuExceptionCount)
+        """)
     }
 }

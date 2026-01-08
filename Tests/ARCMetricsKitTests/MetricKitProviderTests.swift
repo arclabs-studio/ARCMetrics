@@ -1,8 +1,14 @@
+//
+//  MetricKitProviderTests.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
 import XCTest
 @testable import ARCMetricsKit
 
 final class MetricKitProviderTests: XCTestCase {
-
     func testProviderSingleton() {
         let provider1 = MetricKitProvider.shared
         let provider2 = MetricKitProvider.shared
@@ -37,7 +43,6 @@ final class MetricKitProviderTests: XCTestCase {
     func testMetricSummaryDescription() {
         var summary = MetricSummary(timeRange: "Test Range")
         summary.peakMemoryUsageMB = 150.5
-        summary.averageCPUPercentage
 
         let description = summary.description
         XCTAssertTrue(description.contains("150.5"))

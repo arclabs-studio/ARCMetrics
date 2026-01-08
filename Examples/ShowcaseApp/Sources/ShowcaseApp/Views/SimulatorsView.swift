@@ -9,9 +9,11 @@ struct SimulatorsView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("These simulators help you test how ARCMetricsKit captures different performance scenarios. MetricKit aggregates data over time, so effects may appear in payloads after 24-48 hours.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Text(
+                        "These simulators help you test how ARCMetricsKit captures different performance scenarios. MetricKit aggregates data over time, so effects may appear in payloads after 24-48 hours."
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 } header: {
                     Text("About Simulators")
                 }
@@ -98,7 +100,7 @@ struct SimulatorsView: View {
 
             // Allocate large arrays
             var arrays: [[Int]] = []
-            for i in 0..<100 {
+            for i in 0 ..< 100 {
                 let largeArray = Array(repeating: i, count: 1_000_000)
                 arrays.append(largeArray)
 
@@ -135,10 +137,10 @@ struct SimulatorsView: View {
 
             // Perform heavy calculations
             await withTaskGroup(of: Void.self) { group in
-                for threadIndex in 0..<4 {
+                for threadIndex in 0 ..< 4 {
                     group.addTask {
                         var result = 0
-                        for i in 0..<10_000_000 {
+                        for i in 0 ..< 10_000_000 {
                             result += i * threadIndex
                             result = result % 1000
                         }
@@ -181,11 +183,11 @@ struct SimulatorsView: View {
             let start = Date()
 
             // Simulate background processing
-            for i in 0..<50 {
+            for i in 0 ..< 50 {
                 // Simulate some work
                 await Task.detached {
                     var sum = 0
-                    for j in 0..<100_000 {
+                    for j in 0 ..< 100_000 {
                         sum += j
                     }
                     return sum
@@ -231,7 +233,8 @@ struct SimulatorsView: View {
                 do {
                     let (_, response) = try await URLSession.shared.data(from: url)
                     if let httpResponse = response as? HTTPURLResponse,
-                       (200...299).contains(httpResponse.statusCode) {
+                       (200 ... 299).contains(httpResponse.statusCode)
+                    {
                         successCount += 1
                     } else {
                         failureCount += 1
