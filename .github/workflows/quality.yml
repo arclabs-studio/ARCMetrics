@@ -25,18 +25,8 @@ jobs:
       - name: Install SwiftLint
         run: brew install swiftlint
 
-      - name: Debug - List Swift files
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "SwiftLint version:"
-          swiftlint version
-          echo "Swift files in Sources/:"
-          find Sources -name "*.swift" | head -20 || echo "No Swift files found"
-          echo "Testing SwiftLint without config:"
-          swiftlint lint Sources/ --reporter summary || echo "SwiftLint without config failed"
-
       - name: Run SwiftLint
-        run: swiftlint lint --config ARCDevTools/configs/swiftlint.yml --strict Sources/ Tests/
+        run: swiftlint lint --strict Sources/ Tests/
 
   swiftformat:
     name: SwiftFormat
