@@ -248,7 +248,7 @@ Enable verbose logging to debug issues:
 
 ### Support
 
-- **GitHub Issues**: [github.com/arclabs/ARCMetrics/issues](https://github.com/arclabs/ARCMetrics)
+- **GitHub Issues**: [github.com/arclabs-studio/ARCMetrics/issues](https://github.com/arclabs-studio/ARCMetrics/issues)
 - **Documentation**: This DocC documentation
 - **Apple Documentation**: [developer.apple.com/metrickit](https://developer.apple.com/documentation/metrickit)
 
