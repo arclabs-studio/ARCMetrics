@@ -11,6 +11,9 @@
     },
     {
       "pattern": "ARCKnowledge/"
+    },
+    {
+      "pattern": "^[a-z]+-[a-z]+$"
     }
   ],
   "replacementPatterns": [
