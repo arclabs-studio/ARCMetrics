@@ -1,6 +1,6 @@
 //
 //  MetricKitProviderTests.swift
-//  ARCMetricsKit
+//  ARCMetrics
 //
 //  Created by ARC Labs Studio on 2025-01-08.
 //

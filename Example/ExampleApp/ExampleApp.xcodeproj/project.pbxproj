@@ -13,7 +13,7 @@
 		71273BB6A7733EA277325A78 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE70B675CC58D3B140F6444D /* Assets.xcassets */; };
 		92F6610F8CA51DCEAB79881F /* SimulatorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF65F87523FF87C8AD4746D8 /* SimulatorsView.swift */; };
 		B6CEE2378C4B43A17554687F /* PreviewHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2C0BBE2A01B71B84E7742BD /* PreviewHelpers.swift */; };
-		D0D29FF31CB93CC15CB65B33 /* ARCMetricsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 87D62F922B6E5AAEB139B695 /* ARCMetricsKit */; };
+		D0D29FF31CB93CC15CB65B33 /* ARCMetrics in Frameworks */ = {isa = PBXBuildFile; productRef = 87D62F922B6E5AAEB139B695 /* ARCMetrics */; };
 		E69CFAF2BF424B305CCCFC3A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB5FDBD8A4851E3F2074BF4 /* SettingsView.swift */; };
 		F94EA21565197D468CCBA44C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F672FF3FB93817E1378BDC3D /* ContentView.swift */; };
 /* End PBXBuildFile section */
@@ -36,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D0D29FF31CB93CC15CB65B33 /* ARCMetricsKit in Frameworks */,
+				D0D29FF31CB93CC15CB65B33 /* ARCMetrics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,7 +124,7 @@
 			);
 			name = ExampleApp;
 			packageProductDependencies = (
-				87D62F922B6E5AAEB139B695 /* ARCMetricsKit */,
+				87D62F922B6E5AAEB139B695 /* ARCMetrics */,
 			);
 			productName = ExampleApp;
 			productReference = 926C3D981D8F7AB7B3F2E007 /* ExampleApp.app */;
@@ -395,9 +395,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		87D62F922B6E5AAEB139B695 /* ARCMetricsKit */ = {
+		87D62F922B6E5AAEB139B695 /* ARCMetrics */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = ARCMetricsKit;
+			productName = ARCMetrics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
