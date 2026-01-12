@@ -2,8 +2,8 @@
 
 An interactive demonstration app for **ARCMetricsKit** that shows how to integrate and use MetricKit in a real iOS/macOS application.
 
-![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)
-![Platform](https://img.shields.io/badge/platforms-iOS%2017%2B%20%7C%20visionOS%201%2B-blue.svg)
+![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)
+![Platform](https://img.shields.io/badge/platforms-iOS%2017%2B%20%7C%20macOS%2014%2B%20%7C%20visionOS%201%2B-blue.svg)
 
 ---
 
@@ -22,7 +22,7 @@ This showcase app demonstrates:
 
 ### Prerequisites
 
-- Xcode 15+
+- Xcode 16+
 - iOS 17+ device or simulator (metrics collection limited in simulator)
 - visionOS 1+ for Vision Pro target
 
@@ -30,7 +30,7 @@ This showcase app demonstrates:
 
 1. **Open the workspace or package**
    ```bash
-   cd Examples/ShowcaseApp
+   cd Example/ShowcaseApp
    open Package.swift
    ```
 
