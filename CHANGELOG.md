@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING:** Renamed library from `ARCMetricsKit` to `ARCMetrics` for consistency with ARC Labs package naming standards
+- Renamed `Sources/ARCMetricsKit/` to `Sources/ARCMetrics/`
+- Renamed `Tests/ARCMetricsKitTests/` to `Tests/ARCMetricsTests/`
+- Moved `Documentation.docc` to package root as per ARC Labs standards
+- Updated all imports from `import ARCMetricsKit` to `import ARCMetrics`
+
 ### Added
 - ARCDevTools integration for quality automation
 - SwiftLint and SwiftFormat configuration

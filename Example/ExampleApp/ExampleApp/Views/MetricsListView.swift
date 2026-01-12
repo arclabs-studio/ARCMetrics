@@ -5,14 +5,13 @@
 //  Created by ARC Labs Studio on 2025-01-12.
 //
 
-import ARCMetricsKit
+import ARCMetrics
 import SwiftUI
 
 struct MetricsListView: View {
-
     // MARK: - Private Properties
 
-    @EnvironmentObject var viewModel: MetricsViewModel
+    @Environment(MetricsViewModel.self) var viewModel
     @State private var showingExportSheet = false
     @State private var exportedText = ""
 
@@ -78,11 +77,11 @@ struct MetricsListView: View {
                             Label("Export", systemImage: "square.and.arrow.up")
                         }
 
-                        Button(role: .destructive) {
-                            viewModel.clearAllMetrics()
-                        } label: {
-                            Label("Clear All", systemImage: "trash")
-                        }
+                        Button(
+                            role: .destructive,
+                            action: { viewModel.clearAllMetrics() },
+                            label: { Label("Clear All", systemImage: "trash") }
+                        )
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
@@ -114,7 +113,6 @@ struct MetricsListView: View {
 // MARK: - Metric Summary Row
 
 struct MetricSummaryRow: View {
-
     let summary: MetricSummary
     let index: Int
 
@@ -146,7 +144,6 @@ struct MetricSummaryRow: View {
 // MARK: - Diagnostic Summary Row
 
 struct DiagnosticSummaryRow: View {
-
     let summary: DiagnosticSummary
     let index: Int
 
@@ -178,7 +175,6 @@ struct DiagnosticSummaryRow: View {
 // MARK: - Metric Badge
 
 struct MetricBadge: View {
-
     let label: String
     let value: String
     var color: Color = .blue
@@ -197,7 +193,6 @@ struct MetricBadge: View {
 // MARK: - Metric Detail View
 
 struct MetricDetailView: View {
-
     let summary: MetricSummary
     let index: Int
 
@@ -209,16 +204,28 @@ struct MetricDetailView: View {
 
             Section("Memory") {
                 DetailRow(label: "Peak Memory", value: "\(String(format: "%.2f", summary.peakMemoryUsageMB)) MB")
-                DetailRow(label: "Average Suspended", value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB")
+                DetailRow(
+                    label: "Average Suspended",
+                    value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB"
+                )
             }
 
             Section("CPU") {
-                DetailRow(label: "Cumulative Time", value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s")
-                DetailRow(label: "Average Percentage", value: "\(String(format: "%.2f", summary.averageCPUPercentage))%")
+                DetailRow(
+                    label: "Cumulative Time",
+                    value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s"
+                )
+                DetailRow(
+                    label: "Average Percentage",
+                    value: "\(String(format: "%.2f", summary.averageCPUPercentage))%"
+                )
             }
 
             Section("GPU") {
-                DetailRow(label: "Cumulative GPU Time", value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
+                DetailRow(
+                    label: "Cumulative GPU Time",
+                    value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
+                )
             }
 
             Section("Disk I/O") {
@@ -226,7 +233,10 @@ struct MetricDetailView: View {
             }
 
             Section("Animation") {
-                DetailRow(label: "Scroll Hitch Ratio", value: "\(String(format: "%.2f", summary.scrollHitchTimeRatio))%")
+                DetailRow(
+                    label: "Scroll Hitch Ratio",
+                    value: "\(String(format: "%.2f", summary.scrollHitchTimeRatio))%"
+                )
             }
 
             Section("Responsiveness") {
@@ -254,7 +264,6 @@ struct MetricDetailView: View {
 // MARK: - Diagnostic Detail View
 
 struct DiagnosticDetailView: View {
-
     let summary: DiagnosticSummary
     let index: Int
 
@@ -308,7 +317,6 @@ struct DiagnosticDetailView: View {
 // MARK: - Detail Row
 
 struct DetailRow: View {
-
     let label: String
     let value: String
 
@@ -326,10 +334,10 @@ struct DetailRow: View {
 
 #Preview("With Data") {
     MetricsListView()
-        .environmentObject(MetricsViewModel.preview)
+        .environment(MetricsViewModel.preview)
 }
 
 #Preview("Empty State") {
     MetricsListView()
-        .environmentObject(MetricsViewModel.emptyPreview)
+        .environment(MetricsViewModel.emptyPreview)
 }

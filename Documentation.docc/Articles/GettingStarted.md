@@ -1,16 +1,16 @@
-# Getting Started with ARCMetricsKit
+# Getting Started with ARCMetrics
 
-Learn how to integrate ARCMetricsKit into your app and start collecting performance metrics.
+Learn how to integrate ARCMetrics into your app and start collecting performance metrics.
 
 ## Overview
 
-ARCMetricsKit wraps Apple's MetricKit framework to provide simplified access to production performance data. This guide walks you through the integration process and explains what data you'll receive.
+ARCMetrics wraps Apple's MetricKit framework to provide simplified access to production performance data. This guide walks you through the integration process and explains what data you'll receive.
 
 ## Installation
 
 ### Swift Package Manager
 
-Add ARCMetricsKit to your `Package.swift`:
+Add ARCMetrics to your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -27,7 +27,7 @@ Or in Xcode: **File → Add Package Dependencies** and enter the repository URL.
 Initialize the MetricKit provider early in your app's lifecycle:
 
 ```swift
-import ARCMetricsKit
+import ARCMetrics
 
 @main
 struct MyApp: App {
@@ -94,7 +94,7 @@ The Simulator provides limited MetricKit support. Use Xcode's **Debug → Simula
 
 ## Testing with Dependency Injection
 
-ARCMetricsKit provides the ``MetricsProviding`` protocol for dependency injection, enabling you to write testable code and provide mock data for SwiftUI previews.
+ARCMetrics provides the ``MetricsProviding`` protocol for dependency injection, enabling you to write testable code and provide mock data for SwiftUI previews.
 
 ### Using the Protocol
 

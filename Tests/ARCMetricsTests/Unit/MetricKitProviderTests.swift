@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import ARCMetricsKit
+@testable import ARCMetrics
 
 final class MetricKitProviderTests: XCTestCase {
     // MARK: - Singleton Tests

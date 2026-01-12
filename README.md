@@ -12,7 +12,7 @@ MetricKit Integration • Privacy-Preserving • DocC Documentation • Zero Ext
 
 ## 🎯 Overview
 
-ARCMetricsKit is a Swift package that provides native MetricKit integration for collecting production performance metrics. It simplifies the process of subscribing to and processing MetricKit payloads, delivering structured `MetricSummary` and `DiagnosticSummary` models via callbacks.
+ARCMetrics is a Swift package that provides native MetricKit integration for collecting production performance metrics. It simplifies the process of subscribing to and processing MetricKit payloads, delivering structured `MetricSummary` and `DiagnosticSummary` models via callbacks.
 
 Part of the ARC Labs Studio package ecosystem.
 
@@ -57,7 +57,7 @@ Then add the dependency to your target:
 .target(
     name: "YourTarget",
     dependencies: [
-        .product(name: "ARCMetricsKit", package: "ARCMetrics")
+        .product(name: "ARCMetrics", package: "ARCMetrics")
     ]
 )
 ```
@@ -67,7 +67,7 @@ Then add the dependency to your target:
 1. **File → Add Package Dependencies**
 2. Enter: `https://github.com/arclabs-studio/ARCMetrics`
 3. Select version: `1.0.0` or later
-4. Add `ARCMetricsKit` to your target
+4. Add `ARCMetrics` to your target
 
 ---
 
@@ -76,7 +76,7 @@ Then add the dependency to your target:
 ### Quick Start
 
 ```swift
-import ARCMetricsKit
+import ARCMetrics
 
 @main
 struct MyApp: App {
@@ -139,7 +139,7 @@ MetricKitProvider.shared.onDiagnosticPayloadsReceived = { summaries in
 ARCMetrics/
 ├── Package.swift
 ├── Sources/
-│   └── ARCMetricsKit/
+│   └── ARCMetrics/
 │       ├── MetricKitProvider.swift       # Singleton, subscribes to MXMetricManager
 │       ├── MetricKitPayloadProcessor.swift  # Transforms payloads → summary models
 │       ├── Models/
@@ -147,9 +147,9 @@ ARCMetrics/
 │       │   └── DiagnosticSummary.swift   # Crash/hang diagnostics model
 │       ├── Protocols/
 │       │   └── MetricsProviding.swift    # Protocol for metrics provider
-│       └── ARCMetricsKit.docc/           # DocC documentation
+│       └── Documentation.docc/           # DocC documentation
 ├── Tests/
-│   └── ARCMetricsKitTests/
+│   └── ARCMetricsTests/
 └── Example/
     └── ExampleApp/                       # Interactive demo app
 ```
@@ -171,7 +171,7 @@ swift test
 
 ## 📐 Architecture
 
-ARCMetricsKit follows a simple architecture optimized for MetricKit integration:
+ARCMetrics follows a simple architecture optimized for MetricKit integration:
 
 - **MetricKitProvider** - Singleton that manages MXMetricManager subscription
 - **MetricKitPayloadProcessor** - Internal processor that transforms raw MetricKit payloads
@@ -200,7 +200,7 @@ swift package generate-documentation
 
 ## 🎮 Example App
 
-Want to see ARCMetricsKit in action? Check out the **interactive example app**!
+Want to see ARCMetrics in action? Check out the **interactive example app**!
 
 ```bash
 cd Example/ExampleApp

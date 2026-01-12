@@ -1,14 +1,14 @@
-# ``ARCMetricsKit``
+# ``ARCMetrics``
 
 Native MetricKit integration for collecting production performance metrics from Apple platform apps.
 
 ## Overview
 
-ARCMetricsKit provides a simplified interface to Apple's MetricKit framework, enabling you to collect and analyze performance metrics and diagnostics from your production apps.
+ARCMetrics provides a simplified interface to Apple's MetricKit framework, enabling you to collect and analyze performance metrics and diagnostics from your production apps.
 
 MetricKit delivers aggregated reports approximately every 24 hours containing metrics about memory usage, CPU utilization, launch times, hangs, and network activity. Diagnostic reports for crashes and hangs are delivered immediately in iOS 15+ and macOS 12+.
 
-![ARCMetricsKit Banner](arcmetrics-banner)
+![ARCMetrics Banner](arcmetrics-banner)
 
 ### Key Features
 
@@ -22,7 +22,7 @@ MetricKit delivers aggregated reports approximately every 24 hours containing me
 ### Quick Start
 
 ```swift
-import ARCMetricsKit
+import ARCMetrics
 
 @main
 struct MyApp: App {

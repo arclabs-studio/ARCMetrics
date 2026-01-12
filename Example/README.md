@@ -1,6 +1,6 @@
 # ExampleApp
 
-Demo application for ARCMetricsKit.
+Demo application for ARCMetrics.
 
 ## Requirements
 

@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SimulatorsView: View {
-
     // MARK: - Private Properties
 
     @State private var isSimulating = false
@@ -20,31 +19,62 @@ struct SimulatorsView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("These simulators help you test how ARCMetricsKit captures different performance scenarios. MetricKit aggregates data over time, so effects may appear in payloads after 24-48 hours.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Text(
+                        """
+                        These simulators help you test how ARCMetrics captures different \
+                        performance scenarios. MetricKit aggregates data over time, so \
+                        effects may appear in payloads after 24-48 hours.
+                        """
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 } header: {
                     Text("About Simulators")
                 }
 
                 Section {
-                    SimulatorButton(title: "Memory Pressure", icon: "memorychip.fill", color: .blue, description: "Allocates large arrays to increase memory usage") {
+                    SimulatorButton(
+                        title: "Memory Pressure",
+                        icon: "memorychip.fill",
+                        color: .blue,
+                        description: "Allocates large arrays to increase memory usage"
+                    ) {
                         simulateMemoryPressure()
                     }
 
-                    SimulatorButton(title: "CPU Intensive Task", icon: "cpu.fill", color: .orange, description: "Performs heavy calculations to increase CPU usage") {
+                    SimulatorButton(
+                        title: "CPU Intensive Task",
+                        icon: "cpu.fill",
+                        color: .orange,
+                        description: "Performs heavy calculations to increase CPU usage"
+                    ) {
                         simulateCPULoad()
                     }
 
-                    SimulatorButton(title: "Main Thread Hang", icon: "hourglass.fill", color: .red, description: "Blocks the main thread for 1 second") {
+                    SimulatorButton(
+                        title: "Main Thread Hang",
+                        icon: "hourglass.fill",
+                        color: .red,
+                        description: "Blocks the main thread for 1 second"
+                    ) {
                         simulateMainThreadHang()
                     }
 
-                    SimulatorButton(title: "Background Work", icon: "gearshape.2.fill", color: .purple, description: "Simulates background processing") {
+                    SimulatorButton(
+                        title: "Background Work",
+                        icon: "gearshape.2.fill",
+                        color: .purple,
+                        description: "Simulates background processing"
+                    ) {
                         simulateBackgroundWork()
                     }
 
-                    SimulatorButton(title: "Network Activity", icon: "network", color: .green, description: "Simulates network requests") {
+                    SimulatorButton(
+                        title: "Network Activity",
+                        icon: "network",
+                        color: .green,
+                        description: "Simulates network requests"
+                    ) {
                         simulateNetworkActivity()
                     }
                 } header: {
@@ -52,15 +82,30 @@ struct SimulatorsView: View {
                 }
 
                 Section {
-                    SimulatorButton(title: "GPU Intensive Work", icon: "gpu", color: .cyan, description: "Performs graphics-intensive operations") {
+                    SimulatorButton(
+                        title: "GPU Intensive Work",
+                        icon: "gpu",
+                        color: .cyan,
+                        description: "Performs graphics-intensive operations"
+                    ) {
                         simulateGPUWork()
                     }
 
-                    SimulatorButton(title: "Disk Write Activity", icon: "externaldrive.fill", color: .indigo, description: "Writes data to disk repeatedly") {
+                    SimulatorButton(
+                        title: "Disk Write Activity",
+                        icon: "externaldrive.fill",
+                        color: .indigo,
+                        description: "Writes data to disk repeatedly"
+                    ) {
                         simulateDiskWrites()
                     }
 
-                    SimulatorButton(title: "Scroll Hitch Generator", icon: "scroll.fill", color: .pink, description: "Creates scroll performance issues") {
+                    SimulatorButton(
+                        title: "Scroll Hitch Generator",
+                        icon: "scroll.fill",
+                        color: .pink,
+                        description: "Creates scroll performance issues"
+                    ) {
                         simulateScrollHitches()
                     }
                 } header: {
@@ -92,9 +137,8 @@ struct SimulatorsView: View {
 
 // MARK: - Simulators
 
-private extension SimulatorsView {
-
-    func simulateMemoryPressure() {
+extension SimulatorsView {
+    private func simulateMemoryPressure() {
         isSimulating = true
         simulationStatus = "Starting memory pressure simulation..."
 
@@ -102,13 +146,13 @@ private extension SimulatorsView {
             let start = Date()
             var arrays: [[Int]] = []
 
-            for i in 0 ..< 100 {
-                let largeArray = Array(repeating: i, count: 1_000_000)
+            for index in 0 ..< 100 {
+                let largeArray = Array(repeating: index, count: 1_000_000)
                 arrays.append(largeArray)
 
-                if i % 10 == 0 {
+                if index % 10 == 0 {
                     await MainActor.run {
-                        simulationStatus = "Allocated \(i) large arrays..."
+                        simulationStatus = "Allocated \(index) large arrays..."
                     }
                 }
 
@@ -127,7 +171,7 @@ private extension SimulatorsView {
         }
     }
 
-    func simulateCPULoad() {
+    private func simulateCPULoad() {
         isSimulating = true
         simulationStatus = "Starting CPU intensive simulation..."
 
@@ -138,8 +182,8 @@ private extension SimulatorsView {
                 for threadIndex in 0 ..< 4 {
                     group.addTask {
                         var result = 0
-                        for i in 0 ..< 10_000_000 {
-                            result += i * threadIndex
+                        for iteration in 0 ..< 10_000_000 {
+                            result += iteration * threadIndex
                             result = result % 1000
                         }
                         print("Thread \(threadIndex) result: \(result)")
@@ -156,7 +200,7 @@ private extension SimulatorsView {
         }
     }
 
-    func simulateMainThreadHang() {
+    private func simulateMainThreadHang() {
         isSimulating = true
         simulationStatus = "Hanging main thread for 1 second..."
 
@@ -170,24 +214,24 @@ private extension SimulatorsView {
         }
     }
 
-    func simulateBackgroundWork() {
+    private func simulateBackgroundWork() {
         isSimulating = true
         simulationStatus = "Starting background work simulation..."
 
         Task {
             let start = Date()
 
-            for i in 0 ..< 50 {
+            for taskIndex in 0 ..< 50 {
                 await Task.detached {
                     var sum = 0
-                    for j in 0 ..< 100_000 {
-                        sum += j
+                    for iteration in 0 ..< 100_000 {
+                        sum += iteration
                     }
                     return sum
                 }.value
 
                 await MainActor.run {
-                    simulationStatus = "Background task \(i + 1)/50..."
+                    simulationStatus = "Background task \(taskIndex + 1)/50..."
                 }
 
                 try? await Task.sleep(for: .milliseconds(100))
@@ -202,7 +246,7 @@ private extension SimulatorsView {
         }
     }
 
-    func simulateNetworkActivity() {
+    private func simulateNetworkActivity() {
         isSimulating = true
         simulationStatus = "Starting network activity simulation..."
 
@@ -224,8 +268,9 @@ private extension SimulatorsView {
 
                 do {
                     let (_, response) = try await URLSession.shared.data(from: url)
-                    if let httpResponse = response as? HTTPURLResponse,
-                       (200 ... 299).contains(httpResponse.statusCode) {
+                    let isSuccess = (response as? HTTPURLResponse)
+                        .map { (200 ... 299).contains($0.statusCode) } ?? false
+                    if isSuccess {
                         successCount += 1
                     } else {
                         failureCount += 1
@@ -244,39 +289,44 @@ private extension SimulatorsView {
             let duration = Date().timeIntervalSince(start)
 
             await MainActor.run {
-                simulationStatus = "Network simulation completed in \(String(format: "%.1f", duration))s\nSuccessful: \(successCount), Failed: \(failureCount)"
+                let durationStr = String(format: "%.1f", duration)
+                simulationStatus = """
+                Network simulation completed in \(durationStr)s
+                Successful: \(successCount), Failed: \(failureCount)
+                """
                 isSimulating = false
             }
         }
     }
 
-    func simulateGPUWork() {
+    private func simulateGPUWork() {
         isSimulating = true
         simulationStatus = "Starting GPU-intensive simulation..."
 
         Task { @MainActor in
             let start = Date()
 
-            for i in 0 ..< 100 {
+            for batchIndex in 0 ..< 100 {
                 var result: Double = 0
-                for j in 0 ..< 100_000 {
-                    result += sin(Double(j) * 0.001) * cos(Double(j) * 0.001)
+                for iteration in 0 ..< 100_000 {
+                    result += sin(Double(iteration) * 0.001) * cos(Double(iteration) * 0.001)
                 }
                 _ = result
 
-                if i % 20 == 0 {
-                    simulationStatus = "GPU work batch \(i / 20 + 1)/5..."
+                if batchIndex % 20 == 0 {
+                    simulationStatus = "GPU work batch \(batchIndex / 20 + 1)/5..."
                     try? await Task.sleep(for: .milliseconds(10))
                 }
             }
 
             let duration = Date().timeIntervalSince(start)
-            simulationStatus = "GPU simulation completed in \(String(format: "%.1f", duration))s"
+            let durationStr = String(format: "%.1f", duration)
+            simulationStatus = "GPU simulation completed in \(durationStr)s"
             isSimulating = false
         }
     }
 
-    func simulateDiskWrites() {
+    private func simulateDiskWrites() {
         isSimulating = true
         simulationStatus = "Starting disk write simulation..."
 
@@ -286,8 +336,8 @@ private extension SimulatorsView {
             let tempDir = fileManager.temporaryDirectory
             var totalBytesWritten = 0
 
-            for i in 0 ..< 50 {
-                let fileName = "arcmetrics_test_\(i).dat"
+            for fileIndex in 0 ..< 50 {
+                let fileName = "arcmetrics_test_\(fileIndex).dat"
                 let fileURL = tempDir.appendingPathComponent(fileName)
                 let dataSize = 100 * 1024
                 let data = Data((0 ..< dataSize).map { _ in UInt8.random(in: 0 ... 255) })
@@ -301,7 +351,7 @@ private extension SimulatorsView {
                 }
 
                 await MainActor.run {
-                    simulationStatus = "Writing file \(i + 1)/50..."
+                    simulationStatus = "Writing file \(fileIndex + 1)/50..."
                 }
 
                 try? await Task.sleep(for: .milliseconds(50))
@@ -311,32 +361,38 @@ private extension SimulatorsView {
             let mbWritten = Double(totalBytesWritten) / (1024 * 1024)
 
             await MainActor.run {
-                simulationStatus = "Disk simulation completed in \(String(format: "%.1f", duration))s\nWrote \(String(format: "%.1f", mbWritten)) MB"
+                let durationStr = String(format: "%.1f", duration)
+                let mbStr = String(format: "%.1f", mbWritten)
+                simulationStatus = """
+                Disk simulation completed in \(durationStr)s
+                Wrote \(mbStr) MB
+                """
                 isSimulating = false
             }
         }
     }
 
-    func simulateScrollHitches() {
+    private func simulateScrollHitches() {
         isSimulating = true
         simulationStatus = "Starting scroll hitch simulation..."
 
         Task { @MainActor in
             let start = Date()
 
-            for i in 0 ..< 20 {
+            for frameIndex in 0 ..< 20 {
                 var result: Double = 0
-                for j in 0 ..< 500_000 {
-                    result += Double(j).squareRoot()
+                for iteration in 0 ..< 500_000 {
+                    result += Double(iteration).squareRoot()
                 }
                 _ = result
 
                 Thread.sleep(forTimeInterval: 0.05)
-                simulationStatus = "Simulating frame \(i + 1)/20..."
+                simulationStatus = "Simulating frame \(frameIndex + 1)/20..."
             }
 
             let duration = Date().timeIntervalSince(start)
-            simulationStatus = "Scroll hitch simulation completed in \(String(format: "%.1f", duration))s"
+            let durationStr = String(format: "%.1f", duration)
+            simulationStatus = "Scroll hitch simulation completed in \(durationStr)s"
             isSimulating = false
         }
     }
@@ -345,7 +401,6 @@ private extension SimulatorsView {
 // MARK: - Simulator Button
 
 struct SimulatorButton: View {
-
     let title: String
     let icon: String
     let color: Color

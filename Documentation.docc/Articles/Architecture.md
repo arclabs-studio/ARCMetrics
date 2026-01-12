@@ -1,10 +1,10 @@
 # Architecture
 
-Understand the internal architecture and data flow of ARCMetricsKit.
+Understand the internal architecture and data flow of ARCMetrics.
 
 ## Overview
 
-ARCMetricsKit provides a clean abstraction layer over Apple's MetricKit framework. This guide explains the key components, their responsibilities, and how data flows through the system.
+ARCMetrics provides a clean abstraction layer over Apple's MetricKit framework. This guide explains the key components, their responsibilities, and how data flows through the system.
 
 ## Component Overview
 
@@ -35,7 +35,7 @@ ARCMetricsKit provides a clean abstraction layer over Apple's MetricKit framewor
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│                       ARCMetricsKit                                 │
+│                       ARCMetrics                                 │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────┐       │
@@ -156,7 +156,7 @@ This protocol enables:
 
 ## Thread Safety
 
-ARCMetricsKit is designed for Swift 6 strict concurrency:
+ARCMetrics is designed for Swift 6 strict concurrency:
 
 - All public types conform to `Sendable`
 - Callbacks are marked `@Sendable`

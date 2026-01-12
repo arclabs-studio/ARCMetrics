@@ -5,14 +5,13 @@
 //  Created by ARC Labs Studio on 2025-01-12.
 //
 
-import ARCMetricsKit
+import ARCMetrics
 import SwiftUI
 
 struct ContentView: View {
-
     // MARK: - Private Properties
 
-    @EnvironmentObject var viewModel: MetricsViewModel
+    @Environment(MetricsViewModel.self) var viewModel
     @State private var selectedTab = 0
 
     // MARK: - View
@@ -43,7 +42,10 @@ struct ContentView: View {
                 }
                 .tag(3)
         }
-        .alert("MetricKit Update", isPresented: $viewModel.showingAlert) {
+        .alert(
+            "MetricKit Update",
+            isPresented: Bindable(viewModel).showingAlert
+        ) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.alertMessage)
@@ -54,8 +56,7 @@ struct ContentView: View {
 // MARK: - Dashboard View
 
 struct DashboardView: View {
-
-    @EnvironmentObject var viewModel: MetricsViewModel
+    @Environment(MetricsViewModel.self) var viewModel
 
     var body: some View {
         NavigationStack {
@@ -83,8 +84,7 @@ struct DashboardView: View {
 // MARK: - Status Card
 
 struct StatusCard: View {
-
-    @ObservedObject var viewModel: MetricsViewModel
+    var viewModel: MetricsViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -101,9 +101,14 @@ struct StatusCard: View {
                     .foregroundColor(.secondary)
             }
 
-            Text("Payloads: \(viewModel.metricSummaries.count) metrics, \(viewModel.diagnosticSummaries.count) diagnostics")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Text(
+                """
+                Payloads: \(viewModel.metricSummaries.count) metrics, \
+                \(viewModel.diagnosticSummaries.count) diagnostics
+                """
+            )
+            .font(.caption)
+            .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -115,7 +120,6 @@ struct StatusCard: View {
 // MARK: - Latest Metrics Card
 
 struct LatestMetricsCard: View {
-
     let summary: MetricSummary
 
     var body: some View {
@@ -125,16 +129,40 @@ struct LatestMetricsCard: View {
 
             Divider()
 
-            MetricRow(icon: "memorychip", label: "Peak Memory", value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB")
+            MetricRow(
+                icon: "memorychip",
+                label: "Peak Memory",
+                value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB"
+            )
             MetricRow(icon: "cpu", label: "Avg CPU", value: "\(String(format: "%.1f", summary.averageCPUPercentage))%")
-            MetricRow(icon: "hourglass", label: "Hang Time", value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s")
-            MetricRow(icon: "timer", label: "Launch Time", value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s")
+            MetricRow(
+                icon: "hourglass",
+                label: "Hang Time",
+                value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s"
+            )
+            MetricRow(
+                icon: "timer",
+                label: "Launch Time",
+                value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s"
+            )
 
             Divider()
 
-            MetricRow(icon: "gpu", label: "GPU Time", value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
-            MetricRow(icon: "externaldrive", label: "Disk Writes", value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB")
-            MetricRow(icon: "scroll", label: "Scroll Hitch", value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%")
+            MetricRow(
+                icon: "gpu",
+                label: "GPU Time",
+                value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
+            )
+            MetricRow(
+                icon: "externaldrive",
+                label: "Disk Writes",
+                value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB"
+            )
+            MetricRow(
+                icon: "scroll",
+                label: "Scroll Hitch",
+                value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%"
+            )
 
             Text("Time Range: \(summary.timeRange)")
                 .font(.caption)
@@ -150,7 +178,6 @@ struct LatestMetricsCard: View {
 // MARK: - Empty Metrics Card
 
 struct EmptyMetricsCard: View {
-
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "chart.bar.xaxis")
@@ -175,8 +202,7 @@ struct EmptyMetricsCard: View {
 // MARK: - Diagnostics Summary Card
 
 struct DiagnosticsSummaryCard: View {
-
-    @ObservedObject var viewModel: MetricsViewModel
+    var viewModel: MetricsViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -204,7 +230,6 @@ struct DiagnosticsSummaryCard: View {
 // MARK: - Metric Row
 
 struct MetricRow: View {
-
     let icon: String
     let label: String
     let value: String
@@ -227,10 +252,10 @@ struct MetricRow: View {
 
 #Preview("With Data") {
     ContentView()
-        .environmentObject(MetricsViewModel.preview)
+        .environment(MetricsViewModel.preview)
 }
 
 #Preview("Empty State") {
     ContentView()
-        .environmentObject(MetricsViewModel.emptyPreview)
+        .environment(MetricsViewModel.emptyPreview)
 }

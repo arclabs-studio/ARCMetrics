@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import ARCMetricsKit
+@testable import ARCMetrics
 
 final class MetricSummaryTests: XCTestCase {
     // MARK: - Initialization Tests

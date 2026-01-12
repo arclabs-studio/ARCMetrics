@@ -12,7 +12,7 @@ swift build
 swift test
 
 # Run a single test file
-swift test --filter ARCMetricsKitTests
+swift test --filter ARCMetricsTests
 
 # Generate DocC documentation
 swift package generate-documentation
@@ -20,7 +20,7 @@ swift package generate-documentation
 
 ## Package Overview
 
-ARCMetricsKit is a Swift package providing native MetricKit integration for collecting production performance metrics. It wraps Apple's MetricKit framework to deliver simplified `MetricSummary` and `DiagnosticSummary` models via callbacks.
+ARCMetrics is a Swift package providing native MetricKit integration for collecting production performance metrics. It wraps Apple's MetricKit framework to deliver simplified `MetricSummary` and `DiagnosticSummary` models via callbacks.
 
 **Platforms:** iOS 17+, visionOS 1+ (MetricKit is not available on macOS/watchOS/tvOS)
 **Swift:** 6.0
@@ -29,12 +29,15 @@ ARCMetricsKit is a Swift package providing native MetricKit integration for coll
 ## Package Architecture
 
 ```
-Sources/ARCMetricsKit/
+Sources/ARCMetrics/
 ├── MetricKitProvider.swift      # Singleton, subscribes to MXMetricManager
 ├── MetricKitPayloadProcessor.swift  # Transforms MX payloads → summary models
-└── Models/
-    ├── MetricSummary.swift      # Performance metrics (memory, CPU, hangs, launch)
-    └── DiagnosticSummary.swift  # Crash/hang diagnostics with nested CrashInfo/HangInfo
+├── Models/
+│   ├── MetricSummary.swift      # Performance metrics (memory, CPU, hangs, launch)
+│   └── DiagnosticSummary.swift  # Crash/hang diagnostics with nested CrashInfo/HangInfo
+├── Protocols/
+│   └── MetricsProviding.swift   # Protocol for metrics provider
+└── Documentation.docc/          # DocC documentation
 ```
 
 **Key types:**
@@ -155,7 +158,7 @@ The Xcode apps and packages follow MVVM+C architecture with SwiftUI, Clean Code,
 
 # Testing Strategy
 
-Tests are in `Tests/ARCMetricsKitTests/` using XCTest. When adding tests:
+Tests are in `Tests/ARCMetricsTests/` using XCTest. When adding tests:
 
 - Use XCTest framework (not Swift Testing)
 - Start every test with tested method followed by '_' and the test description (e.g., `func testProviderSingleton()`).

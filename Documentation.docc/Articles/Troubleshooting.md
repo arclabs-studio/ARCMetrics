@@ -1,10 +1,10 @@
 # Troubleshooting
 
-Solutions to common issues when using ARCMetricsKit.
+Solutions to common issues when using ARCMetrics.
 
 ## Overview
 
-This guide addresses frequently encountered issues when integrating and using ARCMetricsKit for performance monitoring.
+This guide addresses frequently encountered issues when integrating and using ARCMetrics for performance monitoring.
 
 ## Common Issues
 
@@ -203,7 +203,7 @@ CAMetalLayer.enableHitchIndicator = true
 
 ### Enable Verbose Logging
 
-ARCMetricsKit uses ARCLogger internally. Enable debug logging:
+ARCMetrics uses ARCLogger internally. Enable debug logging:
 
 ```swift
 // In your app's initialization
@@ -233,7 +233,7 @@ Use Xcode's built-in simulation:
 If you encounter issues not covered here:
 
 1. Check [Apple's MetricKit documentation](https://developer.apple.com/documentation/metrickit)
-2. Review [ARCMetricsKit GitHub issues](https://github.com/arclabs-studio/ARCMetrics/issues)
+2. Review [ARCMetrics GitHub issues](https://github.com/arclabs-studio/ARCMetrics/issues)
 3. File a new issue with:
    - iOS/macOS version
    - Device model
