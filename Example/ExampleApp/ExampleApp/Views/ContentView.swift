@@ -1,35 +1,42 @@
+//
+//  ContentView.swift
+//  ExampleApp
+//
+//  Created by ARC Labs Studio on 2025-01-12.
+//
+
 import ARCMetricsKit
 import SwiftUI
 
-/// Main content view for the Showcase App
 struct ContentView: View {
+
+    // MARK: - Private Properties
+
     @EnvironmentObject var viewModel: MetricsViewModel
     @State private var selectedTab = 0
 
+    // MARK: - View
+
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Dashboard Tab
             DashboardView()
                 .tabItem {
                     Label("Dashboard", systemImage: "chart.bar.fill")
                 }
                 .tag(0)
 
-            // Metrics Tab
             MetricsListView()
                 .tabItem {
                     Label("Metrics", systemImage: "list.bullet.rectangle")
                 }
                 .tag(1)
 
-            // Simulators Tab
             SimulatorsView()
                 .tabItem {
                     Label("Simulators", systemImage: "hammer.fill")
                 }
                 .tag(2)
 
-            // Settings Tab
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
@@ -47,30 +54,28 @@ struct ContentView: View {
 // MARK: - Dashboard View
 
 struct DashboardView: View {
+
     @EnvironmentObject var viewModel: MetricsViewModel
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Status Card
                     StatusCard(viewModel: viewModel)
 
-                    // Latest Metrics
                     if let latest = viewModel.latestMetrics {
                         LatestMetricsCard(summary: latest)
                     } else {
                         EmptyMetricsCard()
                     }
 
-                    // Diagnostics Summary
                     DiagnosticsSummaryCard(viewModel: viewModel)
 
                     Spacer()
                 }
                 .padding()
             }
-            .navigationTitle("ARCMetrics Showcase")
+            .navigationTitle("ARCMetrics")
         }
     }
 }
@@ -78,6 +83,7 @@ struct DashboardView: View {
 // MARK: - Status Card
 
 struct StatusCard: View {
+
     @ObservedObject var viewModel: MetricsViewModel
 
     var body: some View {
@@ -95,11 +101,9 @@ struct StatusCard: View {
                     .foregroundColor(.secondary)
             }
 
-            Text(
-                "Payloads: \(viewModel.metricSummaries.count) metrics, \(viewModel.diagnosticSummaries.count) diagnostics"
-            )
-            .font(.caption)
-            .foregroundColor(.secondary)
+            Text("Payloads: \(viewModel.metricSummaries.count) metrics, \(viewModel.diagnosticSummaries.count) diagnostics")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -111,6 +115,7 @@ struct StatusCard: View {
 // MARK: - Latest Metrics Card
 
 struct LatestMetricsCard: View {
+
     let summary: MetricSummary
 
     var body: some View {
@@ -120,40 +125,16 @@ struct LatestMetricsCard: View {
 
             Divider()
 
-            MetricRow(
-                icon: "memorychip",
-                label: "Peak Memory",
-                value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB"
-            )
+            MetricRow(icon: "memorychip", label: "Peak Memory", value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB")
             MetricRow(icon: "cpu", label: "Avg CPU", value: "\(String(format: "%.1f", summary.averageCPUPercentage))%")
-            MetricRow(
-                icon: "hourglass",
-                label: "Hang Time",
-                value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s"
-            )
-            MetricRow(
-                icon: "timer",
-                label: "Launch Time",
-                value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s"
-            )
+            MetricRow(icon: "hourglass", label: "Hang Time", value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s")
+            MetricRow(icon: "timer", label: "Launch Time", value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s")
 
             Divider()
 
-            MetricRow(
-                icon: "gpu",
-                label: "GPU Time",
-                value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
-            )
-            MetricRow(
-                icon: "externaldrive",
-                label: "Disk Writes",
-                value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB"
-            )
-            MetricRow(
-                icon: "scroll",
-                label: "Scroll Hitch",
-                value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%"
-            )
+            MetricRow(icon: "gpu", label: "GPU Time", value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
+            MetricRow(icon: "externaldrive", label: "Disk Writes", value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB")
+            MetricRow(icon: "scroll", label: "Scroll Hitch", value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%")
 
             Text("Time Range: \(summary.timeRange)")
                 .font(.caption)
@@ -169,6 +150,7 @@ struct LatestMetricsCard: View {
 // MARK: - Empty Metrics Card
 
 struct EmptyMetricsCard: View {
+
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "chart.bar.xaxis")
@@ -193,6 +175,7 @@ struct EmptyMetricsCard: View {
 // MARK: - Diagnostics Summary Card
 
 struct DiagnosticsSummaryCard: View {
+
     @ObservedObject var viewModel: MetricsViewModel
 
     var body: some View {
@@ -221,6 +204,7 @@ struct DiagnosticsSummaryCard: View {
 // MARK: - Metric Row
 
 struct MetricRow: View {
+
     let icon: String
     let label: String
     let value: String
@@ -238,6 +222,8 @@ struct MetricRow: View {
         .font(.subheadline)
     }
 }
+
+// MARK: - Previews
 
 #Preview("With Data") {
     ContentView()

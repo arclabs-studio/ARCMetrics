@@ -1,14 +1,24 @@
+//
+//  SettingsView.swift
+//  ExampleApp
+//
+//  Created by ARC Labs Studio on 2025-01-12.
+//
+
 import SwiftUI
 
-/// Settings view for managing the showcase app
 struct SettingsView: View {
+
+    // MARK: - Private Properties
+
     @EnvironmentObject var viewModel: MetricsViewModel
     @State private var showingClearAlert = false
+
+    // MARK: - View
 
     var body: some View {
         NavigationStack {
             List {
-                // Collection Settings
                 Section {
                     Toggle(isOn: Binding(
                         get: { viewModel.isCollecting },
@@ -20,12 +30,9 @@ struct SettingsView: View {
                 } header: {
                     Text("MetricKit Collection")
                 } footer: {
-                    Text(
-                        "When enabled, ARCMetricsKit will collect performance metrics from MetricKit. Metrics are delivered approximately every 24 hours."
-                    )
+                    Text("When enabled, ARCMetricsKit will collect performance metrics from MetricKit. Metrics are delivered approximately every 24 hours.")
                 }
 
-                // Data Management
                 Section {
                     Button(role: .destructive) {
                         showingClearAlert = true
@@ -35,13 +42,8 @@ struct SettingsView: View {
                     .disabled(!viewModel.hasReceivedMetrics)
                 } header: {
                     Text("Data Management")
-                } footer: {
-                    Text(
-                        "This will remove all stored metric and diagnostic summaries from the app. This does not affect MetricKit's internal data."
-                    )
                 }
 
-                // Statistics
                 Section {
                     StatRow(label: "Metric Summaries", value: "\(viewModel.metricSummaries.count)")
                     StatRow(label: "Diagnostic Events", value: "\(viewModel.diagnosticSummaries.count)")
@@ -60,7 +62,6 @@ struct SettingsView: View {
                     Text("Statistics")
                 }
 
-                // About Section
                 Section {
                     NavigationLink {
                         AboutView()
@@ -72,14 +73,13 @@ struct SettingsView: View {
                         Label("MetricKit Documentation", systemImage: "book")
                     }
 
-                    Link(destination: URL(string: "https://github.com/arclabs/ARCMetrics")!) {
+                    Link(destination: URL(string: "https://github.com/arclabs-studio/ARCMetrics")!) {
                         Label("GitHub Repository", systemImage: "link")
                     }
                 } header: {
                     Text("Resources")
                 }
 
-                // App Info
                 Section {
                     HStack {
                         Text("App Version")
@@ -114,6 +114,7 @@ struct SettingsView: View {
 // MARK: - Stat Row
 
 struct StatRow: View {
+
     let label: String
     let value: String
 
@@ -131,10 +132,10 @@ struct StatRow: View {
 // MARK: - About View
 
 struct AboutView: View {
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Header
                 VStack(spacing: 12) {
                     Image(systemName: "chart.bar.doc.horizontal.fill")
                         .font(.system(size: 60))
@@ -153,51 +154,16 @@ struct AboutView: View {
 
                 Divider()
 
-                // Description
                 VStack(alignment: .leading, spacing: 12) {
                     Text("About")
                         .font(.headline)
 
-                    Text("""
-                    ARCMetricsKit provides a simplified interface to Apple's MetricKit framework, making it easy to collect and analyze performance metrics from your production apps.
-
-                    MetricKit automatically captures critical metrics like memory usage, CPU consumption, battery impact, launch times, and more—without requiring manual instrumentation.
-                    """)
-                    .font(.body)
+                    Text("ARCMetricsKit provides a simplified interface to Apple's MetricKit framework, making it easy to collect and analyze performance metrics from your production apps.")
+                        .font(.body)
                 }
 
                 Divider()
 
-                // Features
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Features")
-                        .font(.headline)
-
-                    FeatureRow(
-                        icon: "gauge.high",
-                        title: "Zero-overhead monitoring",
-                        description: "MetricKit runs in the background with minimal impact"
-                    )
-                    FeatureRow(
-                        icon: "checkmark.shield",
-                        title: "Production-ready",
-                        description: "Metrics are collected from real users in production"
-                    )
-                    FeatureRow(
-                        icon: "chart.line.uptrend.xyaxis",
-                        title: "Comprehensive coverage",
-                        description: "Memory, CPU, hangs, crashes, battery, and more"
-                    )
-                    FeatureRow(
-                        icon: "lock.shield",
-                        title: "Privacy-preserving",
-                        description: "No PII collected, aggregated data only"
-                    )
-                }
-
-                Divider()
-
-                // Metrics Collected
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Metrics Collected")
                         .font(.headline)
@@ -215,7 +181,6 @@ struct AboutView: View {
 
                 Divider()
 
-                // License
                 VStack(alignment: .leading, spacing: 8) {
                     Text("License")
                         .font(.headline)
@@ -230,42 +195,14 @@ struct AboutView: View {
             .padding()
         }
         .navigationTitle("About")
-        #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-        #endif
-    }
-}
-
-// MARK: - Feature Row
-
-struct FeatureRow: View {
-    let icon: String
-    let title: String
-    let description: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(.blue)
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 // MARK: - Metric Type Row
 
 struct MetricTypeRow: View {
+
     let icon: String
     let title: String
     let description: String
@@ -290,7 +227,9 @@ struct MetricTypeRow: View {
     }
 }
 
-#Preview("With Data") {
+// MARK: - Previews
+
+#Preview("Settings") {
     SettingsView()
         .environmentObject(MetricsViewModel.preview)
 }

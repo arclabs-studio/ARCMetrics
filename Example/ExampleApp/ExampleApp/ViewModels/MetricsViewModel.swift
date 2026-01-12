@@ -1,9 +1,16 @@
+//
+//  MetricsViewModel.swift
+//  ExampleApp
+//
+//  Created by ARC Labs Studio on 2025-01-12.
+//
+
 import ARCMetricsKit
 import SwiftUI
 
-/// ViewModel that manages metrics state and handles MetricKit callbacks
 @MainActor
 final class MetricsViewModel: ObservableObject {
+
     // MARK: - Published Properties
 
     @Published var metricSummaries: [MetricSummary] = []
@@ -37,70 +44,15 @@ final class MetricsViewModel: ObservableObject {
         setupMetricKitCallbacks()
     }
 
-    // MARK: - Setup
-
-    private func setupMetricKitCallbacks() {
-        // Register callback for performance metrics
-        MetricKitProvider.shared.onMetricPayloadsReceived = { [weak self] summaries in
-            Task { @MainActor in
-                guard let self else { return }
-
-                print("📊 Received \(summaries.count) metric payload(s)")
-
-                self.metricSummaries.append(contentsOf: summaries)
-                self.lastUpdateTime = Date()
-
-                // Show alert for first metrics
-                if self.metricSummaries.count == summaries.count {
-                    self.showAlert(
-                        title: "Metrics Received!",
-                        message: "Received your first metric payload with \(summaries.count) summary(ies)"
-                    )
-                }
-
-                // Log details
-                for summary in summaries {
-                    self.logMetricSummary(summary)
-                }
-            }
-        }
-
-        // Register callback for diagnostic events
-        MetricKitProvider.shared.onDiagnosticPayloadsReceived = { [weak self] summaries in
-            Task { @MainActor in
-                guard let self else { return }
-
-                print("🔴 Received \(summaries.count) diagnostic payload(s)")
-
-                self.diagnosticSummaries.append(contentsOf: summaries)
-                self.lastUpdateTime = Date()
-
-                // Show alert for crashes
-                let totalCrashes = summaries.reduce(0) { $0 + $1.crashCount }
-                if totalCrashes > 0 {
-                    self.showAlert(
-                        title: "Crashes Detected",
-                        message: "Detected \(totalCrashes) crash(es) in the diagnostic payload"
-                    )
-                }
-
-                // Log details
-                for summary in summaries {
-                    self.logDiagnosticSummary(summary)
-                }
-            }
-        }
-    }
-
     // MARK: - Actions
 
     func toggleCollection() {
         if isCollecting {
             MetricKitProvider.shared.stopCollecting()
-            print("⏸️ MetricKit collection stopped")
+            print("MetricKit collection stopped")
         } else {
             MetricKitProvider.shared.startCollecting()
-            print("▶️ MetricKit collection started")
+            print("MetricKit collection started")
         }
         isCollecting.toggle()
     }
@@ -109,7 +61,7 @@ final class MetricsViewModel: ObservableObject {
         metricSummaries.removeAll()
         diagnosticSummaries.removeAll()
         lastUpdateTime = nil
-        print("🗑️ All metrics cleared")
+        print("All metrics cleared")
     }
 
     func exportMetrics() -> String {
@@ -130,17 +82,67 @@ final class MetricsViewModel: ObservableObject {
 
         return export
     }
+}
 
-    // MARK: - Private Helpers
+// MARK: - Private Functions
 
-    private func showAlert(title: String, message: String) {
+private extension MetricsViewModel {
+
+    func setupMetricKitCallbacks() {
+        MetricKitProvider.shared.onMetricPayloadsReceived = { [weak self] summaries in
+            Task { @MainActor in
+                guard let self else { return }
+
+                print("Received \(summaries.count) metric payload(s)")
+
+                self.metricSummaries.append(contentsOf: summaries)
+                self.lastUpdateTime = Date()
+
+                if self.metricSummaries.count == summaries.count {
+                    self.showAlert(
+                        title: "Metrics Received!",
+                        message: "Received your first metric payload with \(summaries.count) summary(ies)"
+                    )
+                }
+
+                for summary in summaries {
+                    self.logMetricSummary(summary)
+                }
+            }
+        }
+
+        MetricKitProvider.shared.onDiagnosticPayloadsReceived = { [weak self] summaries in
+            Task { @MainActor in
+                guard let self else { return }
+
+                print("Received \(summaries.count) diagnostic payload(s)")
+
+                self.diagnosticSummaries.append(contentsOf: summaries)
+                self.lastUpdateTime = Date()
+
+                let totalCrashes = summaries.reduce(0) { $0 + $1.crashCount }
+                if totalCrashes > 0 {
+                    self.showAlert(
+                        title: "Crashes Detected",
+                        message: "Detected \(totalCrashes) crash(es) in the diagnostic payload"
+                    )
+                }
+
+                for summary in summaries {
+                    self.logDiagnosticSummary(summary)
+                }
+            }
+        }
+    }
+
+    func showAlert(title: String, message: String) {
         alertMessage = "\(title)\n\n\(message)"
         showingAlert = true
     }
 
-    private func logMetricSummary(_ summary: MetricSummary) {
+    func logMetricSummary(_ summary: MetricSummary) {
         print("""
-        📊 Metric Summary:
+        Metric Summary:
         - Time Range: \(summary.timeRange)
         - Peak Memory: \(String(format: "%.1f", summary.peakMemoryUsageMB)) MB
         - Avg CPU: \(String(format: "%.1f", summary.averageCPUPercentage))%
@@ -152,9 +154,9 @@ final class MetricsViewModel: ObservableObject {
         """)
     }
 
-    private func logDiagnosticSummary(_ summary: DiagnosticSummary) {
+    func logDiagnosticSummary(_ summary: DiagnosticSummary) {
         print("""
-        🔴 Diagnostic Summary:
+        Diagnostic Summary:
         - Time Range: \(summary.timeRange)
         - Crashes: \(summary.crashCount)
         - Hangs: \(summary.hangCount)

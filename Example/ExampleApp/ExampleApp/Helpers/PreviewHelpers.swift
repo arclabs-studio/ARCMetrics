@@ -1,8 +1,8 @@
 //
 //  PreviewHelpers.swift
-//  ShowcaseApp
+//  ExampleApp
 //
-//  Created by ARC Labs Studio on 2025-01-08.
+//  Created by ARC Labs Studio on 2025-01-12.
 //
 
 import ARCMetricsKit
@@ -10,9 +10,8 @@ import Foundation
 
 // MARK: - Preview Sample Data
 
-/// Sample data generators for SwiftUI previews
 enum PreviewData {
-    /// Creates a sample metric summary with realistic values
+
     static func sampleMetricSummary(
         timeRange: String = "Jan 7-8, 2025",
         peakMemory: Double = 185.5,
@@ -43,7 +42,6 @@ enum PreviewData {
         return summary
     }
 
-    /// Creates a sample diagnostic summary
     static func sampleDiagnosticSummary(
         timeRange: String = "Jan 7-8, 2025",
         crashCount: Int = 2,
@@ -54,12 +52,9 @@ enum PreviewData {
         summary.hangCount = hangCount
         summary.diskWriteExceptionCount = 1
         summary.cpuExceptionCount = 0
-        // Note: CrashInfo and HangInfo detailed data requires internal initializers
-        // In real usage, these are populated by MetricKit payloads
         return summary
     }
 
-    /// Creates multiple sample metric summaries for list previews
     static var sampleMetricSummaries: [MetricSummary] {
         [
             sampleMetricSummary(timeRange: "Jan 7-8, 2025", peakMemory: 185.5, gpuTime: 12.5, scrollHitch: 3.2),
@@ -68,7 +63,6 @@ enum PreviewData {
         ]
     }
 
-    /// Creates multiple sample diagnostic summaries for list previews
     static var sampleDiagnosticSummaries: [DiagnosticSummary] {
         [
             sampleDiagnosticSummary(timeRange: "Jan 7-8, 2025", crashCount: 2, hangCount: 5),
@@ -79,9 +73,8 @@ enum PreviewData {
 
 // MARK: - Preview ViewModel
 
-/// A pre-configured MetricsViewModel for SwiftUI previews
 extension MetricsViewModel {
-    /// Creates a ViewModel with sample data for previews
+
     @MainActor static var preview: MetricsViewModel {
         let viewModel = MetricsViewModel()
         viewModel.metricSummaries = PreviewData.sampleMetricSummaries
@@ -90,7 +83,6 @@ extension MetricsViewModel {
         return viewModel
     }
 
-    /// Creates an empty ViewModel for empty state previews
     @MainActor static var emptyPreview: MetricsViewModel {
         MetricsViewModel()
     }

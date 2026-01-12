@@ -48,11 +48,16 @@ MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in ... }
 MetricKitProvider.shared.startCollecting()
 ```
 
-## Showcase App
+## Example App
 
-An interactive example app lives at `Examples/ShowcaseApp/`. Open it with:
+An interactive example app lives at `Example/ExampleApp/`. Open it with:
 ```bash
-cd Examples/ShowcaseApp && open Package.swift
+cd Example/ExampleApp && open ExampleApp.xcodeproj
+```
+
+To regenerate the Xcode project (if needed):
+```bash
+cd Example/ExampleApp && xcodegen generate
 ```
 
 ---
