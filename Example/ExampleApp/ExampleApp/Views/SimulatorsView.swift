@@ -204,13 +204,14 @@ extension SimulatorsView {
         isSimulating = true
         simulationStatus = "Hanging main thread for 1 second..."
 
-        Task { @MainActor in
-            let start = Date()
+        let start = Date()
+
+        DispatchQueue.main.async {
             Thread.sleep(forTimeInterval: 1.0)
 
             let duration = Date().timeIntervalSince(start)
-            simulationStatus = "Main thread hang completed (\(String(format: "%.1f", duration))s)"
-            isSimulating = false
+            self.simulationStatus = "Main thread hang completed (\(String(format: "%.1f", duration))s)"
+            self.isSimulating = false
         }
     }
 
@@ -376,9 +377,9 @@ extension SimulatorsView {
         isSimulating = true
         simulationStatus = "Starting scroll hitch simulation..."
 
-        Task { @MainActor in
-            let start = Date()
+        let start = Date()
 
+        DispatchQueue.main.async {
             for frameIndex in 0 ..< 20 {
                 var result: Double = 0
                 for iteration in 0 ..< 500_000 {
@@ -387,13 +388,13 @@ extension SimulatorsView {
                 _ = result
 
                 Thread.sleep(forTimeInterval: 0.05)
-                simulationStatus = "Simulating frame \(frameIndex + 1)/20..."
+                self.simulationStatus = "Simulating frame \(frameIndex + 1)/20..."
             }
 
             let duration = Date().timeIntervalSince(start)
             let durationStr = String(format: "%.1f", duration)
-            simulationStatus = "Scroll hitch simulation completed in \(durationStr)s"
-            isSimulating = false
+            self.simulationStatus = "Scroll hitch simulation completed in \(durationStr)s"
+            self.isSimulating = false
         }
     }
 }
