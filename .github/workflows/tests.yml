@@ -31,7 +31,7 @@ jobs:
       - name: Build and test for iOS
         run: |
           xcodebuild test \
-            -scheme ARCMetricsKit \
+            -scheme ARCMetrics \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -skipPackagePluginValidation \
             -skipMacroValidation \

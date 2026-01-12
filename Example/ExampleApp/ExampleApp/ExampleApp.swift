@@ -5,14 +5,14 @@
 //  Created by ARC Labs Studio on 2025-01-12.
 //
 
-import ARCMetricsKit
+import ARCMetrics
 import SwiftUI
 
 @main
 struct ExampleApp: App {
     // MARK: - Private Properties
 
-    @StateObject private var metricsViewModel = MetricsViewModel()
+    @State private var metricsViewModel = MetricsViewModel()
 
     // MARK: - Initialization
 
@@ -29,7 +29,7 @@ struct ExampleApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(metricsViewModel)
+                .environment(metricsViewModel)
         }
     }
 }

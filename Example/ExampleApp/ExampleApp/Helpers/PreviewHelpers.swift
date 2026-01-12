@@ -5,13 +5,12 @@
 //  Created by ARC Labs Studio on 2025-01-12.
 //
 
-import ARCMetricsKit
+import ARCMetrics
 import Foundation
 
 // MARK: - Preview Sample Data
 
 enum PreviewData {
-
     static func sampleMetricSummary(
         timeRange: String = "Jan 7-8, 2025",
         peakMemory: Double = 185.5,
@@ -74,7 +73,6 @@ enum PreviewData {
 // MARK: - Preview ViewModel
 
 extension MetricsViewModel {
-
     @MainActor static var preview: MetricsViewModel {
         let viewModel = MetricsViewModel()
         viewModel.metricSummaries = PreviewData.sampleMetricSummaries

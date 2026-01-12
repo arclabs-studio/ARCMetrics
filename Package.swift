@@ -20,8 +20,8 @@ let package = Package(
 
     products: [
         .library(
-            name: "ARCMetricsKit",
-            targets: ["ARCMetricsKit"]
+            name: "ARCMetrics",
+            targets: ["ARCMetrics"]
         )
     ],
 
@@ -37,11 +37,11 @@ let package = Package(
     targets: [
         // Main library
         .target(
-            name: "ARCMetricsKit",
+            name: "ARCMetrics",
             dependencies: [
                 .product(name: "ARCLogger", package: "ARCLogger")
             ],
-            path: "Sources/ARCMetricsKit",
+            path: "Sources/ARCMetrics",
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency")
             ]
@@ -49,9 +49,9 @@ let package = Package(
 
         // Tests
         .testTarget(
-            name: "ARCMetricsKitTests",
-            dependencies: ["ARCMetricsKit"],
-            path: "Tests/ARCMetricsKitTests"
+            name: "ARCMetricsTests",
+            dependencies: ["ARCMetrics"],
+            path: "Tests/ARCMetricsTests"
         )
     ],
 

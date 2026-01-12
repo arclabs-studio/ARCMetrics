@@ -5,20 +5,20 @@
 //  Created by ARC Labs Studio on 2025-01-12.
 //
 
-import ARCMetricsKit
+import ARCMetrics
 import SwiftUI
 
-@MainActor
-final class MetricsViewModel: ObservableObject {
+@Observable @MainActor
+// swiftlint:disable:next observable_viewmodel
+final class MetricsViewModel {
+    // MARK: - Properties
 
-    // MARK: - Published Properties
-
-    @Published var metricSummaries: [MetricSummary] = []
-    @Published var diagnosticSummaries: [DiagnosticSummary] = []
-    @Published var isCollecting: Bool = true
-    @Published var lastUpdateTime: Date?
-    @Published var showingAlert: Bool = false
-    @Published var alertMessage: String = ""
+    var metricSummaries: [MetricSummary] = []
+    var diagnosticSummaries: [DiagnosticSummary] = []
+    var isCollecting = true
+    var lastUpdateTime: Date?
+    var showingAlert = false
+    var alertMessage: String = ""
 
     // MARK: - Computed Properties
 
@@ -86,9 +86,8 @@ final class MetricsViewModel: ObservableObject {
 
 // MARK: - Private Functions
 
-private extension MetricsViewModel {
-
-    func setupMetricKitCallbacks() {
+extension MetricsViewModel {
+    private func setupMetricKitCallbacks() {
         MetricKitProvider.shared.onMetricPayloadsReceived = { [weak self] summaries in
             Task { @MainActor in
                 guard let self else { return }
@@ -135,12 +134,12 @@ private extension MetricsViewModel {
         }
     }
 
-    func showAlert(title: String, message: String) {
+    private func showAlert(title: String, message: String) {
         alertMessage = "\(title)\n\n\(message)"
         showingAlert = true
     }
 
-    func logMetricSummary(_ summary: MetricSummary) {
+    private func logMetricSummary(_ summary: MetricSummary) {
         print("""
         Metric Summary:
         - Time Range: \(summary.timeRange)
@@ -154,7 +153,7 @@ private extension MetricsViewModel {
         """)
     }
 
-    func logDiagnosticSummary(_ summary: DiagnosticSummary) {
+    private func logDiagnosticSummary(_ summary: DiagnosticSummary) {
         print("""
         Diagnostic Summary:
         - Time Range: \(summary.timeRange)

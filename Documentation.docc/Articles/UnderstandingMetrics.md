@@ -1,10 +1,10 @@
 # Understanding Your Metrics
 
-Learn how to interpret the performance data collected by ARCMetricsKit.
+Learn how to interpret the performance data collected by ARCMetrics.
 
 ## Overview
 
-ARCMetricsKit provides two types of summaries: ``MetricSummary`` for performance metrics and ``DiagnosticSummary`` for crash and hang diagnostics. This guide explains what each metric means and what values you should target.
+ARCMetrics provides two types of summaries: ``MetricSummary`` for performance metrics and ``DiagnosticSummary`` for crash and hang diagnostics. This guide explains what each metric means and what values you should target.
 
 ## Performance Metrics
 

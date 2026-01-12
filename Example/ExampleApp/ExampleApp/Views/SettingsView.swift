@@ -8,10 +8,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-
     // MARK: - Private Properties
 
-    @EnvironmentObject var viewModel: MetricsViewModel
+    @Environment(MetricsViewModel.self) var viewModel
     @State private var showingClearAlert = false
 
     // MARK: - View
@@ -20,25 +19,32 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section {
-                    Toggle(isOn: Binding(
-                        get: { viewModel.isCollecting },
-                        set: { _ in viewModel.toggleCollection() }
-                    )) {
+                    Toggle(
+                        isOn: Binding(
+                            get: { viewModel.isCollecting },
+                            set: { _ in viewModel.toggleCollection() }
+                        )
+                    ) {
                         Label("Collect Metrics", systemImage: "chart.bar.fill")
                     }
                     .tint(.blue)
                 } header: {
                     Text("MetricKit Collection")
                 } footer: {
-                    Text("When enabled, ARCMetricsKit will collect performance metrics from MetricKit. Metrics are delivered approximately every 24 hours.")
+                    Text(
+                        """
+                        When enabled, ARCMetrics will collect performance metrics \
+                        from MetricKit. Metrics are delivered approximately every 24 hours.
+                        """
+                    )
                 }
 
                 Section {
-                    Button(role: .destructive) {
-                        showingClearAlert = true
-                    } label: {
-                        Label("Clear All Metrics", systemImage: "trash")
-                    }
+                    Button(
+                        role: .destructive,
+                        action: { showingClearAlert = true },
+                        label: { Label("Clear All Metrics", systemImage: "trash") }
+                    )
                     .disabled(!viewModel.hasReceivedMetrics)
                 } header: {
                     Text("Data Management")
@@ -69,12 +75,16 @@ struct SettingsView: View {
                         Label("About ARCMetrics", systemImage: "info.circle")
                     }
 
-                    Link(destination: URL(string: "https://developer.apple.com/documentation/metrickit")!) {
-                        Label("MetricKit Documentation", systemImage: "book")
+                    if let metricKitURL = URL(string: "https://developer.apple.com/documentation/metrickit") {
+                        Link(destination: metricKitURL) {
+                            Label("MetricKit Documentation", systemImage: "book")
+                        }
                     }
 
-                    Link(destination: URL(string: "https://github.com/arclabs-studio/ARCMetrics")!) {
-                        Label("GitHub Repository", systemImage: "link")
+                    if let githubURL = URL(string: "https://github.com/arclabs-studio/ARCMetrics") {
+                        Link(destination: githubURL) {
+                            Label("GitHub Repository", systemImage: "link")
+                        }
                     }
                 } header: {
                     Text("Resources")
@@ -89,7 +99,7 @@ struct SettingsView: View {
                     }
 
                     HStack {
-                        Text("ARCMetricsKit")
+                        Text("ARCMetrics")
                         Spacer()
                         Text("1.0.0")
                             .foregroundColor(.secondary)
@@ -99,13 +109,21 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .alert("Clear All Metrics?", isPresented: $showingClearAlert) {
+            .alert(
+                "Clear All Metrics?",
+                isPresented: $showingClearAlert
+            ) {
                 Button("Cancel", role: .cancel) {}
                 Button("Clear", role: .destructive) {
                     viewModel.clearAllMetrics()
                 }
             } message: {
-                Text("This will remove all stored metrics from the app. This action cannot be undone.")
+                Text(
+                    """
+                    This will remove all stored metrics from the app. \
+                    This action cannot be undone.
+                    """
+                )
             }
         }
     }
@@ -114,7 +132,6 @@ struct SettingsView: View {
 // MARK: - Stat Row
 
 struct StatRow: View {
-
     let label: String
     let value: String
 
@@ -132,7 +149,6 @@ struct StatRow: View {
 // MARK: - About View
 
 struct AboutView: View {
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -158,8 +174,14 @@ struct AboutView: View {
                     Text("About")
                         .font(.headline)
 
-                    Text("ARCMetricsKit provides a simplified interface to Apple's MetricKit framework, making it easy to collect and analyze performance metrics from your production apps.")
-                        .font(.body)
+                    Text(
+                        """
+                        ARCMetrics provides a simplified interface to Apple's MetricKit \
+                        framework, making it easy to collect and analyze performance \
+                        metrics from your production apps.
+                        """
+                    )
+                    .font(.body)
                 }
 
                 Divider()
@@ -202,7 +224,6 @@ struct AboutView: View {
 // MARK: - Metric Type Row
 
 struct MetricTypeRow: View {
-
     let icon: String
     let title: String
     let description: String
@@ -231,7 +252,7 @@ struct MetricTypeRow: View {
 
 #Preview("Settings") {
     SettingsView()
-        .environmentObject(MetricsViewModel.preview)
+        .environment(MetricsViewModel.preview)
 }
 
 #Preview("About") {

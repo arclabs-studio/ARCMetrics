@@ -24,7 +24,7 @@ targets:
       - ExampleApp
     dependencies:
       - package: ARCMetrics
-        product: ARCMetricsKit
+        product: ARCMetrics
     settings:
       base:
         INFOPLIST_GENERATION_MODE: GeneratedFile

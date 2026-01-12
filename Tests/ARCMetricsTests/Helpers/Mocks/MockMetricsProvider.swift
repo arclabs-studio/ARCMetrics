@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@testable import ARCMetricsKit
+@testable import ARCMetrics
 
 /// A mock implementation of `MetricsProviding` for testing purposes.
 ///
