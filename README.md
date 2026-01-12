@@ -151,7 +151,7 @@ ARCMetrics/
 ├── Tests/
 │   └── ARCMetricsKitTests/
 └── Example/
-    └── ShowcaseApp/                      # Interactive demo app
+    └── ExampleApp/                       # Interactive demo app
 ```
 
 ---
@@ -200,14 +200,14 @@ swift package generate-documentation
 
 ## 🎮 Example App
 
-Want to see ARCMetricsKit in action? Check out the **interactive showcase app**!
+Want to see ARCMetricsKit in action? Check out the **interactive example app**!
 
 ```bash
-cd Example/ShowcaseApp
-open Package.swift
+cd Example/ExampleApp
+open ExampleApp.xcodeproj
 ```
 
-[**View Showcase README →**](Example/ShowcaseApp/README.md)
+[**View Example README →**](Example/README.md)
 
 **Features:**
 - 📊 Dashboard with live metrics
