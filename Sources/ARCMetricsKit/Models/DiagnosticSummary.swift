@@ -1,3 +1,10 @@
+//
+//  DiagnosticSummary.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
 import Foundation
 
 /// A summary of diagnostic events collected by MetricKit.
@@ -20,8 +27,7 @@ import Foundation
 /// ### Resource Exceptions
 /// - ``diskWriteExceptionCount``
 /// - ``cpuExceptionCount``
-public struct DiagnosticSummary: Sendable {
-
+public struct DiagnosticSummary: Sendable, Codable, Equatable, Hashable {
     // MARK: - Properties
 
     /// Time range covered by this diagnostic summary.
@@ -66,7 +72,7 @@ public struct DiagnosticSummary: Sendable {
     // MARK: - Nested Types
 
     /// Detailed information about a crash.
-    public struct CrashInfo: Sendable {
+    public struct CrashInfo: Sendable, Codable, Equatable, Hashable {
         /// The type of exception that caused the crash (e.g., "EXC_BAD_ACCESS").
         public let exceptionType: String?
 
@@ -81,7 +87,7 @@ public struct DiagnosticSummary: Sendable {
     }
 
     /// Detailed information about a hang event.
-    public struct HangInfo: Sendable {
+    public struct HangInfo: Sendable, Codable, Equatable, Hashable {
         /// Duration of the hang, in seconds.
         ///
         /// **Severity levels:**

@@ -20,7 +20,9 @@ struct SettingsView: View {
                 } header: {
                     Text("MetricKit Collection")
                 } footer: {
-                    Text("When enabled, ARCMetricsKit will collect performance metrics from MetricKit. Metrics are delivered approximately every 24 hours.")
+                    Text(
+                        "When enabled, ARCMetricsKit will collect performance metrics from MetricKit. Metrics are delivered approximately every 24 hours."
+                    )
                 }
 
                 // Data Management
@@ -34,7 +36,9 @@ struct SettingsView: View {
                 } header: {
                     Text("Data Management")
                 } footer: {
-                    Text("This will remove all stored metric and diagnostic summaries from the app. This does not affect MetricKit's internal data.")
+                    Text(
+                        "This will remove all stored metric and diagnostic summaries from the app. This does not affect MetricKit's internal data."
+                    )
                 }
 
                 // Statistics
@@ -96,7 +100,7 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .alert("Clear All Metrics?", isPresented: $showingClearAlert) {
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
                 Button("Clear", role: .destructive) {
                     viewModel.clearAllMetrics()
                 }
@@ -169,10 +173,26 @@ struct AboutView: View {
                     Text("Features")
                         .font(.headline)
 
-                    FeatureRow(icon: "gauge.high", title: "Zero-overhead monitoring", description: "MetricKit runs in the background with minimal impact")
-                    FeatureRow(icon: "checkmark.shield", title: "Production-ready", description: "Metrics are collected from real users in production")
-                    FeatureRow(icon: "chart.line.uptrend.xyaxis", title: "Comprehensive coverage", description: "Memory, CPU, hangs, crashes, battery, and more")
-                    FeatureRow(icon: "lock.shield", title: "Privacy-preserving", description: "No PII collected, aggregated data only")
+                    FeatureRow(
+                        icon: "gauge.high",
+                        title: "Zero-overhead monitoring",
+                        description: "MetricKit runs in the background with minimal impact"
+                    )
+                    FeatureRow(
+                        icon: "checkmark.shield",
+                        title: "Production-ready",
+                        description: "Metrics are collected from real users in production"
+                    )
+                    FeatureRow(
+                        icon: "chart.line.uptrend.xyaxis",
+                        title: "Comprehensive coverage",
+                        description: "Memory, CPU, hangs, crashes, battery, and more"
+                    )
+                    FeatureRow(
+                        icon: "lock.shield",
+                        title: "Privacy-preserving",
+                        description: "No PII collected, aggregated data only"
+                    )
                 }
 
                 Divider()
@@ -184,6 +204,9 @@ struct AboutView: View {
 
                     MetricTypeRow(icon: "memorychip", title: "Memory", description: "Peak & average usage")
                     MetricTypeRow(icon: "cpu", title: "CPU", description: "Utilization percentage")
+                    MetricTypeRow(icon: "gpu", title: "GPU", description: "Graphics processing time")
+                    MetricTypeRow(icon: "externaldrive", title: "Disk I/O", description: "Write activity")
+                    MetricTypeRow(icon: "scroll", title: "Animation", description: "Scroll hitch ratio")
                     MetricTypeRow(icon: "hourglass", title: "Hangs", description: "UI freeze time")
                     MetricTypeRow(icon: "timer", title: "Launches", description: "Time to first frame")
                     MetricTypeRow(icon: "network", title: "Network", description: "Cellular & WiFi usage")
@@ -207,7 +230,9 @@ struct AboutView: View {
             .padding()
         }
         .navigationTitle("About")
-        .navigationBarTitleDisplayMode(.inline)
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -265,7 +290,13 @@ struct MetricTypeRow: View {
     }
 }
 
-#Preview {
+#Preview("With Data") {
     SettingsView()
-        .environmentObject(MetricsViewModel())
+        .environmentObject(MetricsViewModel.preview)
+}
+
+#Preview("About") {
+    NavigationStack {
+        AboutView()
+    }
 }

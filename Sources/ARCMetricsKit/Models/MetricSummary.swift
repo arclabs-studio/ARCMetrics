@@ -1,3 +1,10 @@
+//
+//  MetricSummary.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
 import Foundation
 
 /// A simplified summary of technical performance metrics collected by MetricKit.
@@ -28,8 +35,16 @@ import Foundation
 /// - ``cellularUploadMB``
 /// - ``wifiDownloadMB``
 /// - ``wifiUploadMB``
-public struct MetricSummary: Sendable {
-
+///
+/// ### GPU Metrics
+/// - ``cumulativeGPUTimeSeconds``
+///
+/// ### Disk I/O
+/// - ``cumulativeDiskWritesMB``
+///
+/// ### Animation
+/// - ``scrollHitchTimeRatio``
+public struct MetricSummary: Sendable, Codable, Equatable, Hashable {
     // MARK: - Properties
 
     /// Time range covered by this metric summary.
@@ -132,6 +147,32 @@ public struct MetricSummary: Sendable {
     /// Data uploaded over WiFi, in megabytes.
     public var wifiUploadMB: Double = 0
 
+    // MARK: GPU
+
+    /// Total GPU time consumed by your app, in seconds.
+    ///
+    /// High GPU usage indicates graphics-intensive operations and can impact
+    /// battery life significantly.
+    public var cumulativeGPUTimeSeconds: Double = 0
+
+    // MARK: Disk I/O
+
+    /// Total logical disk writes, in megabytes.
+    ///
+    /// High disk write activity can slow down the device and drain battery.
+    /// Consider caching strategies and batch writes to reduce this metric.
+    public var cumulativeDiskWritesMB: Double = 0
+
+    // MARK: Animation
+
+    /// Scroll hitch time ratio as a percentage.
+    ///
+    /// A hitch occurs when a frame takes longer than expected to render during scrolling.
+    /// Lower values indicate smoother scrolling performance.
+    ///
+    /// **Target:** < 5%
+    public var scrollHitchTimeRatio: Double = 0
+
     // MARK: - Initialization
 
     public init(timeRange: String) {
@@ -146,11 +187,17 @@ extension MetricSummary: CustomStringConvertible {
         """
         MetricSummary(
           timeRange: \(timeRange)
-          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(format: "%.1f", averageMemoryUsageMB))MB
+          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(
+              format: "%.1f",
+              averageMemoryUsageMB
+          ))MB
           cpu: \(String(format: "%.1f", averageCPUPercentage))%
           hangs: \(String(format: "%.2f", totalHangTimeSeconds))s
           launch: \(String(format: "%.2f", averageLaunchTimeSeconds))s
-          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(format: "%.1f", cellularUploadMB))MB↑
+          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(
+              format: "%.1f",
+              cellularUploadMB
+          ))MB↑
         )
         """
     }

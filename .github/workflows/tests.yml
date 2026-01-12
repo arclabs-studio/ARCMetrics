@@ -1,0 +1,38 @@
+# ARCDevTools Workflow Template
+# Source: https://github.com/arclabs-studio/ARCDevTools/workflows/tests.yml
+#
+# This file was copied from ARCDevTools. You can customize it for your project.
+# To update: re-run ./ARCDevTools/arcdevtools-setup or manually copy from ARCDevTools/workflows/
+#
+# NOTE: This package only supports iOS and visionOS (MetricKit is not available on macOS/Linux).
+# Tests run using xcodebuild with iOS simulator.
+name: Tests
+
+on:
+  push:
+    branches: [main, develop, feature/*]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-ios:
+    name: Build & Test (iOS)
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Display Xcode version
+        run: xcodebuild -version
+
+      - name: Build and test for iOS
+        run: |
+          xcodebuild test \
+            -scheme ARCMetricsKit \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            | xcpretty || true

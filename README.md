@@ -20,7 +20,7 @@ Native MetricKit integration for collecting production performance metrics from 
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/arclabs/ARCMetrics.git", from: "1.0.0")
+    .package(url: "https://github.com/arclabs-studio/ARCMetrics.git", from: "1.0.0")
 ]
 ```
 
@@ -126,9 +126,9 @@ swift test
 ## 📱 Platform Support
 
 - iOS 17+
-- macOS 14+
-- watchOS 10+
 - visionOS 1+
+
+> **Note**: MetricKit is not available on macOS, watchOS, or tvOS.
 
 ## 📄 License
 
@@ -136,5 +136,5 @@ MIT License - ARC Labs Studio
 
 ## 🔗 Related Packages
 
-- [ARCLogger](https://github.com/arclabs/ARCLogger) - Logging system
-- [ARCFirebase](https://github.com/arclabs/ARCFirebase) - Firebase integration
+- [ARCLogger](https://github.com/arclabs-studio/ARCLogger) - Logging system
+- [ARCFirebase](https://github.com/arclabs-studio/ARCFirebase) - Firebase integration

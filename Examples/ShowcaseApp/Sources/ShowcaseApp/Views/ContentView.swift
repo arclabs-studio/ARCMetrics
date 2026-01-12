@@ -1,5 +1,5 @@
-import SwiftUI
 import ARCMetricsKit
+import SwiftUI
 
 /// Main content view for the Showcase App
 struct ContentView: View {
@@ -37,7 +37,7 @@ struct ContentView: View {
                 .tag(3)
         }
         .alert("MetricKit Update", isPresented: $viewModel.showingAlert) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.alertMessage)
         }
@@ -95,9 +95,11 @@ struct StatusCard: View {
                     .foregroundColor(.secondary)
             }
 
-            Text("Payloads: \(viewModel.metricSummaries.count) metrics, \(viewModel.diagnosticSummaries.count) diagnostics")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Text(
+                "Payloads: \(viewModel.metricSummaries.count) metrics, \(viewModel.diagnosticSummaries.count) diagnostics"
+            )
+            .font(.caption)
+            .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -118,10 +120,40 @@ struct LatestMetricsCard: View {
 
             Divider()
 
-            MetricRow(icon: "memorychip", label: "Peak Memory", value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB")
+            MetricRow(
+                icon: "memorychip",
+                label: "Peak Memory",
+                value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB"
+            )
             MetricRow(icon: "cpu", label: "Avg CPU", value: "\(String(format: "%.1f", summary.averageCPUPercentage))%")
-            MetricRow(icon: "hourglass", label: "Hang Time", value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s")
-            MetricRow(icon: "timer", label: "Launch Time", value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s")
+            MetricRow(
+                icon: "hourglass",
+                label: "Hang Time",
+                value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s"
+            )
+            MetricRow(
+                icon: "timer",
+                label: "Launch Time",
+                value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s"
+            )
+
+            Divider()
+
+            MetricRow(
+                icon: "gpu",
+                label: "GPU Time",
+                value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
+            )
+            MetricRow(
+                icon: "externaldrive",
+                label: "Disk Writes",
+                value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB"
+            )
+            MetricRow(
+                icon: "scroll",
+                label: "Scroll Hitch",
+                value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%"
+            )
 
             Text("Time Range: \(summary.timeRange)")
                 .font(.caption)
@@ -207,7 +239,12 @@ struct MetricRow: View {
     }
 }
 
-#Preview {
+#Preview("With Data") {
     ContentView()
-        .environmentObject(MetricsViewModel())
+        .environmentObject(MetricsViewModel.preview)
+}
+
+#Preview("Empty State") {
+    ContentView()
+        .environmentObject(MetricsViewModel.emptyPreview)
 }

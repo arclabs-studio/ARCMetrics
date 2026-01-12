@@ -1,14 +1,27 @@
-import Foundation
-import MetricKit
+//
+//  MetricKitPayloadProcessor.swift
+//  ARCMetricsKit
+//
+//  Created by ARC Labs Studio on 2025-01-05.
+//
+
 import ARCLogger
+import Foundation
+
+#if os(iOS) || os(visionOS)
+import MetricKit
+#endif
 
 /// Processes raw MetricKit payloads into simplified summary models.
 ///
 /// This internal class handles the complex MetricKit API and extracts the most
 /// relevant metrics into easy-to-use `MetricSummary` and `DiagnosticSummary` objects.
+///
+/// - Note: MetricKit is only available on iOS and visionOS.
 final class MetricKitPayloadProcessor {
-
     private let logger = ARCLogger(category: "MetricKitProcessor")
+
+    #if os(iOS) || os(visionOS)
 
     // MARK: - Metric Payload Processing
 
@@ -27,30 +40,29 @@ final class MetricKitPayloadProcessor {
         // Memory metrics
         if let memory = payload.memoryMetrics {
             summary.peakMemoryUsageMB = formatBytes(memory.peakMemoryUsage)
-            summary.averageMemoryUsageMB = formatBytes(memory.averageSuspendedMemory?.averageMeasurement)
+            summary.averageMemoryUsageMB = formatBytes(memory.averageSuspendedMemory.averageMeasurement)
         }
 
         // CPU metrics
         if let cpu = payload.cpuMetrics {
-            summary.cumulativeCPUTimeSeconds = cpu.cumulativeCPUTime.value(as: .seconds)
+            summary.cumulativeCPUTimeSeconds = cpu.cumulativeCPUTime.converted(to: .seconds).value
         }
 
-        // Display metrics (Hangs)
-        if let display = payload.displayMetrics {
-            summary.totalHangTimeSeconds = display.totalHangTime?.value(as: .seconds) ?? 0
+        // Application responsiveness metrics (Hangs) - iOS 14+
+        if let responsiveness = payload.applicationResponsivenessMetrics {
+            summary.totalHangTimeSeconds = responsiveness.histogrammedApplicationHangTime.totalBucketCountsValue
         }
 
         // Application time metrics
         if let appTime = payload.applicationTimeMetrics {
-            summary.foregroundTimeSeconds = appTime.cumulativeForegroundTime.value(as: .seconds)
-            summary.backgroundTimeSeconds = appTime.cumulativeBackgroundTime.value(as: .seconds)
+            summary.foregroundTimeSeconds = appTime.cumulativeForegroundTime.converted(to: .seconds).value
+            summary.backgroundTimeSeconds = appTime.cumulativeBackgroundTime.converted(to: .seconds).value
         }
 
         // Launch metrics
         if let launch = payload.applicationLaunchMetrics {
-            if let histogram = launch.histogrammedTimeToFirstDraw {
-                summary.averageLaunchTimeSeconds = calculateHistogramAverage(histogram)
-            }
+            let histogram = launch.histogrammedTimeToFirstDraw
+            summary.averageLaunchTimeSeconds = calculateHistogramAverage(histogram)
         }
 
         // Network metrics
@@ -59,6 +71,21 @@ final class MetricKitPayloadProcessor {
             summary.cellularUploadMB = formatBytes(network.cumulativeCellularUpload)
             summary.wifiDownloadMB = formatBytes(network.cumulativeWifiDownload)
             summary.wifiUploadMB = formatBytes(network.cumulativeWifiUpload)
+        }
+
+        // GPU metrics
+        if let gpu = payload.gpuMetrics {
+            summary.cumulativeGPUTimeSeconds = gpu.cumulativeGPUTime.converted(to: .seconds).value
+        }
+
+        // Disk I/O metrics
+        if let diskIO = payload.diskIOMetrics {
+            summary.cumulativeDiskWritesMB = formatBytes(diskIO.cumulativeLogicalWrites)
+        }
+
+        // Animation metrics
+        if let animation = payload.animationMetrics {
+            summary.scrollHitchTimeRatio = animation.scrollHitchTimeRatio.value * 100
         }
 
         logger.debug("Processed metric payload for range: \(summary.timeRange)")
@@ -85,8 +112,8 @@ final class MetricKitPayloadProcessor {
             summary.crashCount = crashes.count
             summary.crashes = crashes.compactMap { crash in
                 DiagnosticSummary.CrashInfo(
-                    exceptionType: crash.exceptionType?.rawValue,
-                    signal: crash.signal?.rawValue,
+                    exceptionType: crash.exceptionType.map { String(describing: $0) },
+                    signal: crash.signal.map { String(describing: $0) },
                     terminationReason: crash.terminationReason,
                     virtualMemoryRegionInfo: crash.virtualMemoryRegionInfo
                 )
@@ -99,7 +126,7 @@ final class MetricKitPayloadProcessor {
             summary.hangCount = hangs.count
             summary.hangs = hangs.compactMap { hang in
                 DiagnosticSummary.HangInfo(
-                    duration: hang.hangDuration.value(as: .seconds)
+                    duration: hang.hangDuration.converted(to: .seconds).value
                 )
             }
             logger.warning("Detected \(hangs.count) hang(s)")
@@ -122,25 +149,13 @@ final class MetricKitPayloadProcessor {
 
     // MARK: - Helpers
 
-    private func formatDateRange(start: Date, end: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
-    }
-
-    private func formatBytes(_ measurement: Measurement<UnitInformationStorage>?) -> Double {
-        guard let measurement = measurement else { return 0 }
-        return measurement.converted(to: .megabytes).value
-    }
-
     private func calculateHistogramAverage(_ histogram: MXHistogram<UnitDuration>) -> Double {
         var totalTime: Double = 0
-        var totalCount: Int = 0
+        var totalCount = 0
 
         for bucket in histogram.bucketEnumerator {
             if let bucket = bucket as? MXHistogramBucket<UnitDuration> {
-                let bucketValue = bucket.bucketStart.value(as: .seconds)
+                let bucketValue = bucket.bucketStart.converted(to: .seconds).value
                 totalTime += bucketValue * Double(bucket.bucketCount)
                 totalCount += bucket.bucketCount
             }
@@ -148,4 +163,38 @@ final class MetricKitPayloadProcessor {
 
         return totalCount > 0 ? totalTime / Double(totalCount) : 0
     }
+    #endif
+
+    private func formatDateRange(start: Date, end: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
+    }
+
+    private func formatBytes(_ measurement: Measurement<UnitInformationStorage>) -> Double {
+        measurement.converted(to: .megabytes).value
+    }
+
+    private func formatBytes(_ measurement: Measurement<UnitInformationStorage>?) -> Double {
+        guard let measurement else { return 0 }
+        return measurement.converted(to: .megabytes).value
+    }
 }
+
+// MARK: - MXHistogram Extension
+
+#if os(iOS) || os(visionOS)
+extension MXHistogram where UnitType == UnitDuration {
+    /// Calculates the total weighted count from all histogram buckets.
+    fileprivate var totalBucketCountsValue: Double {
+        var total: Double = 0
+        for bucket in bucketEnumerator {
+            if let bucket = bucket as? MXHistogramBucket<UnitDuration> {
+                total += bucket.bucketStart.converted(to: .seconds).value * Double(bucket.bucketCount)
+            }
+        }
+        return total
+    }
+}
+#endif

@@ -3,7 +3,7 @@
 An interactive demonstration app for **ARCMetricsKit** that shows how to integrate and use MetricKit in a real iOS/macOS application.
 
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)
-![Platform](https://img.shields.io/badge/platforms-iOS%2017%2B%20%7C%20macOS%2014%2B-blue.svg)
+![Platform](https://img.shields.io/badge/platforms-iOS%2017%2B%20%7C%20visionOS%201%2B-blue.svg)
 
 ---
 
@@ -24,7 +24,7 @@ This showcase app demonstrates:
 
 - Xcode 15+
 - iOS 17+ device or simulator (metrics collection limited in simulator)
-- macOS 14+ for Mac target
+- visionOS 1+ for Vision Pro target
 
 ### Steps
 
@@ -338,7 +338,7 @@ In your production app, you would typically:
 
 - **Main Package**: [../../README.md](../../README.md)
 - **ARCMetricsKit Docs**: [../../Sources/ARCMetricsKit/ARCMetricsKit.docc/](../../Sources/ARCMetricsKit/ARCMetricsKit.docc/)
-- **GitHub**: [https://github.com/arclabs/ARCMetrics](https://github.com/arclabs/ARCMetrics)
+- **GitHub**: [https://github.com/arclabs-studio/ARCMetrics](https://github.com/arclabs-studio/ARCMetrics)
 
 ---
 
