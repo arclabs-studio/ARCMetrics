@@ -1,17 +1,26 @@
+//
+//  MetricsListView.swift
+//  ExampleApp
+//
+//  Created by ARC Labs Studio on 2025-01-12.
+//
+
 import ARCMetricsKit
 import SwiftUI
 
-/// View that displays a list of all received metrics
 struct MetricsListView: View {
+
+    // MARK: - Private Properties
+
     @EnvironmentObject var viewModel: MetricsViewModel
-    @State private var selectedMetricIndex: Int?
     @State private var showingExportSheet = false
     @State private var exportedText = ""
+
+    // MARK: - View
 
     var body: some View {
         NavigationStack {
             List {
-                // Metric Summaries Section
                 Section {
                     if viewModel.metricSummaries.isEmpty {
                         Text("No metric summaries received yet")
@@ -35,7 +44,6 @@ struct MetricsListView: View {
                     }
                 }
 
-                // Diagnostic Summaries Section
                 Section {
                     if viewModel.diagnosticSummaries.isEmpty {
                         Text("No diagnostic events received")
@@ -63,16 +71,16 @@ struct MetricsListView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button(action: {
+                        Button {
                             exportedText = viewModel.exportMetrics()
                             showingExportSheet = true
-                        }) {
+                        } label: {
                             Label("Export", systemImage: "square.and.arrow.up")
                         }
 
-                        Button(role: .destructive, action: {
+                        Button(role: .destructive) {
                             viewModel.clearAllMetrics()
-                        }) {
+                        } label: {
                             Label("Clear All", systemImage: "trash")
                         }
                     } label: {
@@ -89,16 +97,14 @@ struct MetricsListView: View {
                             .padding()
                     }
                     .navigationTitle("Export")
-                    #if os(iOS)
-                        .navigationBarTitleDisplayMode(.inline)
-                    #endif
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") {
-                                    showingExportSheet = false
-                                }
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                showingExportSheet = false
                             }
                         }
+                    }
                 }
             }
         }
@@ -108,6 +114,7 @@ struct MetricsListView: View {
 // MARK: - Metric Summary Row
 
 struct MetricSummaryRow: View {
+
     let summary: MetricSummary
     let index: Int
 
@@ -139,6 +146,7 @@ struct MetricSummaryRow: View {
 // MARK: - Diagnostic Summary Row
 
 struct DiagnosticSummaryRow: View {
+
     let summary: DiagnosticSummary
     let index: Int
 
@@ -170,6 +178,7 @@ struct DiagnosticSummaryRow: View {
 // MARK: - Metric Badge
 
 struct MetricBadge: View {
+
     let label: String
     let value: String
     var color: Color = .blue
@@ -188,6 +197,7 @@ struct MetricBadge: View {
 // MARK: - Metric Detail View
 
 struct MetricDetailView: View {
+
     let summary: MetricSummary
     let index: Int
 
@@ -199,42 +209,24 @@ struct MetricDetailView: View {
 
             Section("Memory") {
                 DetailRow(label: "Peak Memory", value: "\(String(format: "%.2f", summary.peakMemoryUsageMB)) MB")
-                DetailRow(
-                    label: "Average Suspended",
-                    value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB"
-                )
+                DetailRow(label: "Average Suspended", value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB")
             }
 
             Section("CPU") {
-                DetailRow(
-                    label: "Cumulative Time",
-                    value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s"
-                )
-                DetailRow(
-                    label: "Average Percentage",
-                    value: "\(String(format: "%.2f", summary.averageCPUPercentage))%"
-                )
+                DetailRow(label: "Cumulative Time", value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s")
+                DetailRow(label: "Average Percentage", value: "\(String(format: "%.2f", summary.averageCPUPercentage))%")
             }
 
             Section("GPU") {
-                DetailRow(
-                    label: "Cumulative GPU Time",
-                    value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
-                )
+                DetailRow(label: "Cumulative GPU Time", value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
             }
 
             Section("Disk I/O") {
-                DetailRow(
-                    label: "Disk Writes",
-                    value: "\(String(format: "%.2f", summary.cumulativeDiskWritesMB)) MB"
-                )
+                DetailRow(label: "Disk Writes", value: "\(String(format: "%.2f", summary.cumulativeDiskWritesMB)) MB")
             }
 
             Section("Animation") {
-                DetailRow(
-                    label: "Scroll Hitch Ratio",
-                    value: "\(String(format: "%.2f", summary.scrollHitchTimeRatio))%"
-                )
+                DetailRow(label: "Scroll Hitch Ratio", value: "\(String(format: "%.2f", summary.scrollHitchTimeRatio))%")
             }
 
             Section("Responsiveness") {
@@ -255,15 +247,14 @@ struct MetricDetailView: View {
             }
         }
         .navigationTitle("Metric #\(index + 1)")
-        #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 // MARK: - Diagnostic Detail View
 
 struct DiagnosticDetailView: View {
+
     let summary: DiagnosticSummary
     let index: Int
 
@@ -310,15 +301,14 @@ struct DiagnosticDetailView: View {
             }
         }
         .navigationTitle("Diagnostic #\(index + 1)")
-        #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 // MARK: - Detail Row
 
 struct DetailRow: View {
+
     let label: String
     let value: String
 
@@ -332,6 +322,8 @@ struct DetailRow: View {
     }
 }
 
+// MARK: - Previews
+
 #Preview("With Data") {
     MetricsListView()
         .environmentObject(MetricsViewModel.preview)
@@ -340,16 +332,4 @@ struct DetailRow: View {
 #Preview("Empty State") {
     MetricsListView()
         .environmentObject(MetricsViewModel.emptyPreview)
-}
-
-#Preview("Metric Detail") {
-    NavigationStack {
-        MetricDetailView(summary: PreviewData.sampleMetricSummary(), index: 0)
-    }
-}
-
-#Preview("Diagnostic Detail") {
-    NavigationStack {
-        DiagnosticDetailView(summary: PreviewData.sampleDiagnosticSummary(), index: 0)
-    }
 }

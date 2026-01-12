@@ -1,30 +1,79 @@
 # ARCMetrics
 
-Native MetricKit integration for collecting production performance metrics from Apple platform apps.
+![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)
+![Platforms](https://img.shields.io/badge/Platforms-iOS%2017%2B%20%7C%20visionOS%201%2B-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-> Part of the ARC Labs Studio package ecosystem
+**Native MetricKit integration for collecting production performance metrics from Apple platform apps.**
 
-## 🎯 Features
+MetricKit Integration • Privacy-Preserving • DocC Documentation • Zero External Dependencies
 
-- ✅ Complete MetricKit integration
-- ✅ Simplified API with callbacks
-- ✅ Comprehensive DocC documentation
-- ✅ Production-ready monitoring
-- ✅ Privacy-preserving (no PII)
-- ✅ Zero external dependencies (except ARCLogger)
-- ✅ Instruments correlation guide
+---
 
-## 📦 Installation
+## 🎯 Overview
+
+ARCMetricsKit is a Swift package that provides native MetricKit integration for collecting production performance metrics. It simplifies the process of subscribing to and processing MetricKit payloads, delivering structured `MetricSummary` and `DiagnosticSummary` models via callbacks.
+
+Part of the ARC Labs Studio package ecosystem.
+
+### Key Features
+
+- ✅ **Complete MetricKit Integration** - Full support for metric and diagnostic payloads
+- ✅ **Simplified API** - Easy-to-use callbacks for receiving metrics
+- ✅ **Comprehensive DocC Documentation** - Full documentation with guides and tutorials
+- ✅ **Production-Ready Monitoring** - Built for real-world production use
+- ✅ **Privacy-Preserving** - No PII collected, all data is aggregated and anonymous
+- ✅ **Zero External Dependencies** - Only depends on ARCLogger from ARC Labs ecosystem
+- ✅ **Instruments Correlation Guide** - Documentation for debugging with Xcode tools
+
+---
+
+## 📋 Requirements
+
+- **Swift:** 6.0+
+- **Platforms:** iOS 17.0+ / visionOS 1.0+
+- **Xcode:** 16.0+
+
+> **Note**: MetricKit is not available on macOS, watchOS, or tvOS.
+
+---
+
+## 🚀 Installation
 
 ### Swift Package Manager
 
+#### For Swift Packages
+
 ```swift
+// Package.swift
 dependencies: [
     .package(url: "https://github.com/arclabs-studio/ARCMetrics.git", from: "1.0.0")
 ]
 ```
 
-## 🚀 Quick Start
+Then add the dependency to your target:
+
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: [
+        .product(name: "ARCMetricsKit", package: "ARCMetrics")
+    ]
+)
+```
+
+#### For Xcode Projects
+
+1. **File → Add Package Dependencies**
+2. Enter: `https://github.com/arclabs-studio/ARCMetrics`
+3. Select version: `1.0.0` or later
+4. Add `ARCMetricsKit` to your target
+
+---
+
+## 📖 Usage
+
+### Quick Start
 
 ```swift
 import ARCMetricsKit
@@ -34,37 +83,19 @@ struct MyApp: App {
     init() {
         MetricKitProvider.shared.startCollecting()
     }
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
 }
 ```
 
-## 📊 What Metrics Are Collected?
-
-- **Memory**: Peak & average usage
-- **CPU**: Utilization percentage
-- **Hangs**: UI freeze time
-- **Launches**: Time to first frame
-- **Network**: Cellular & WiFi usage
-- **Crashes**: Detailed crash reports
-- **Battery**: Energy consumption
-
-## 📚 Documentation
-
-Full DocC documentation included:
-
-- **Getting Started**: Quick integration guide
-- **Understanding Metrics**: Interpret your data
-- **Instruments Integration**: Debug with Xcode tools
-- **Troubleshooting**: Common issues & FAQ
-
-Build docs:
-```bash
-swift package generate-documentation
-```
-
-## 🔍 Example Usage
+### Handling Metric Payloads
 
 ```swift
-// Register callbacks
+// Register callbacks for receiving metrics
 MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
     for summary in summaries {
         print("📊 Peak Memory: \(summary.peakMemoryUsageMB) MB")
@@ -74,7 +105,11 @@ MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
         sendToAnalytics(summary)
     }
 }
+```
 
+### Handling Diagnostic Payloads
+
+```swift
 MetricKitProvider.shared.onDiagnosticPayloadsReceived = { summaries in
     for summary in summaries {
         if summary.crashCount > 0 {
@@ -84,22 +119,95 @@ MetricKitProvider.shared.onDiagnosticPayloadsReceived = { summaries in
 }
 ```
 
-## 🎮 Showcase App
+### Available Metrics
 
-Want to see ARCMetricsKit in action? Check out the **interactive showcase app**!
+| Category | Metrics |
+|----------|---------|
+| **Memory** | Peak & average usage |
+| **CPU** | Utilization percentage |
+| **Hangs** | UI freeze time |
+| **Launches** | Time to first frame |
+| **Network** | Cellular & WiFi usage |
+| **Crashes** | Detailed crash reports |
+| **Battery** | Energy consumption |
 
-The showcase app demonstrates:
-- Complete integration example
-- Real-time metrics visualization
-- Performance scenario simulators
-- Best practices implementation
+---
 
-```bash
-cd Examples/ShowcaseApp
-open Package.swift
+## 🏗️ Project Structure
+
+```
+ARCMetrics/
+├── Package.swift
+├── Sources/
+│   └── ARCMetricsKit/
+│       ├── MetricKitProvider.swift       # Singleton, subscribes to MXMetricManager
+│       ├── MetricKitPayloadProcessor.swift  # Transforms payloads → summary models
+│       ├── Models/
+│       │   ├── MetricSummary.swift       # Performance metrics model
+│       │   └── DiagnosticSummary.swift   # Crash/hang diagnostics model
+│       ├── Protocols/
+│       │   └── MetricsProviding.swift    # Protocol for metrics provider
+│       └── ARCMetricsKit.docc/           # DocC documentation
+├── Tests/
+│   └── ARCMetricsKitTests/
+└── Example/
+    └── ExampleApp/                       # Interactive demo app
 ```
 
-[**View Showcase README →**](Examples/ShowcaseApp/README.md)
+---
+
+## 🧪 Testing
+
+```bash
+swift test
+```
+
+### Coverage
+
+- **Target:** 100% (packages)
+- **Minimum:** 80%
+
+---
+
+## 📐 Architecture
+
+ARCMetricsKit follows a simple architecture optimized for MetricKit integration:
+
+- **MetricKitProvider** - Singleton that manages MXMetricManager subscription
+- **MetricKitPayloadProcessor** - Internal processor that transforms raw MetricKit payloads
+- **Models** - `Sendable` structs for thread-safe metric data
+
+For complete architecture guidelines, see [ARCKnowledge](https://github.com/arclabs-studio/ARCKnowledge).
+
+---
+
+## 📚 Documentation
+
+Full DocC documentation is included with guides for:
+
+- **Getting Started** - Quick integration guide
+- **Understanding Metrics** - Interpret your data
+- **Instruments Integration** - Debug with Xcode tools
+- **Troubleshooting** - Common issues & FAQ
+
+Build documentation:
+
+```bash
+swift package generate-documentation
+```
+
+---
+
+## 🎮 Example App
+
+Want to see ARCMetricsKit in action? Check out the **interactive example app**!
+
+```bash
+cd Example/ExampleApp
+open ExampleApp.xcodeproj
+```
+
+[**View Example README →**](Example/README.md)
 
 **Features:**
 - 📊 Dashboard with live metrics
@@ -108,7 +216,7 @@ open Package.swift
 - ⚙️ Settings and configuration
 - 📖 Interactive learning experience
 
-Perfect for understanding how MetricKit works before integrating into your production app!
+---
 
 ## ⚠️ Important Notes
 
@@ -117,24 +225,63 @@ Perfect for understanding how MetricKit works before integrating into your produ
 - **TestFlight/Production** recommended for testing
 - Data is **aggregated and anonymous**
 
-## 🧪 Testing
+---
 
-```bash
-swift test
+## 🤝 Contributing
+
+This is an internal package for ARC Labs Studio. Team members:
+
+1. Create a feature branch: `feature/ARC-123-description`
+2. Follow [ARCKnowledge](https://github.com/arclabs-studio/ARCKnowledge) standards
+3. Ensure tests pass: `swift test`
+4. Run quality checks: `make lint && make fix`
+5. Create a pull request to `develop`
+
+### Commit Messages
+
+Follow [Conventional Commits](https://github.com/arclabs-studio/ARCKnowledge/blob/main/Workflow/git-commits.md):
+
+```
+feat(ARC-123): add new metric type support
+fix(ARC-456): resolve crash on payload processing
+docs: update installation instructions
 ```
 
-## 📱 Platform Support
+---
 
-- iOS 17+
-- visionOS 1+
+## 📦 Versioning
 
-> **Note**: MetricKit is not available on macOS, watchOS, or tvOS.
+This project follows [Semantic Versioning](https://semver.org/):
+
+- **MAJOR** - Breaking changes
+- **MINOR** - New features (backwards compatible)
+- **PATCH** - Bug fixes (backwards compatible)
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+---
 
 ## 📄 License
 
-MIT License - ARC Labs Studio
+MIT License © 2025 ARC Labs Studio
 
-## 🔗 Related Packages
+See [LICENSE](LICENSE) for details.
 
-- [ARCLogger](https://github.com/arclabs-studio/ARCLogger) - Logging system
-- [ARCFirebase](https://github.com/arclabs-studio/ARCFirebase) - Firebase integration
+---
+
+## 🔗 Related Resources
+
+- **[ARCKnowledge](https://github.com/arclabs-studio/ARCKnowledge)** - Development standards and guidelines
+- **[ARCDevTools](https://github.com/arclabs-studio/ARCDevTools)** - Quality tooling and automation
+- **[ARCLogger](https://github.com/arclabs-studio/ARCLogger)** - Logging system
+- **[ARCFirebase](https://github.com/arclabs-studio/ARCFirebase)** - Firebase integration
+
+---
+
+<div align="center">
+
+Made with 💛 by ARC Labs Studio
+
+[**GitHub**](https://github.com/arclabs-studio) • [**Issues**](https://github.com/arclabs-studio/ARCMetrics/issues)
+
+</div>
