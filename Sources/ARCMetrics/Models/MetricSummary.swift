@@ -187,17 +187,13 @@ extension MetricSummary: CustomStringConvertible {
         """
         MetricSummary(
           timeRange: \(timeRange)
-          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(
-              format: "%.1f",
-              averageMemoryUsageMB
-          ))MB
+          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(format: "%.1f",
+                                                                                    averageMemoryUsageMB))MB
           cpu: \(String(format: "%.1f", averageCPUPercentage))%
           hangs: \(String(format: "%.2f", totalHangTimeSeconds))s
           launch: \(String(format: "%.2f", averageLaunchTimeSeconds))s
-          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(
-              format: "%.1f",
-              cellularUploadMB
-          ))MB↑
+          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(format: "%.1f",
+                                                                                      cellularUploadMB))MB↑
         )
         """
     }

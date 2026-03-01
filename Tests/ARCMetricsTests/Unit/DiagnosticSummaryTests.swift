@@ -26,12 +26,10 @@ final class DiagnosticSummaryTests: XCTestCase {
     // MARK: - CrashInfo Tests
 
     func testCrashInfoInitialization() {
-        let crashInfo = DiagnosticSummary.CrashInfo(
-            exceptionType: "EXC_BAD_ACCESS",
-            signal: "SIGSEGV",
-            terminationReason: "Memory access error",
-            virtualMemoryRegionInfo: "0x1000"
-        )
+        let crashInfo = DiagnosticSummary.CrashInfo(exceptionType: "EXC_BAD_ACCESS",
+                                                    signal: "SIGSEGV",
+                                                    terminationReason: "Memory access error",
+                                                    virtualMemoryRegionInfo: "0x1000")
 
         XCTAssertEqual(crashInfo.exceptionType, "EXC_BAD_ACCESS")
         XCTAssertEqual(crashInfo.signal, "SIGSEGV")
@@ -40,12 +38,10 @@ final class DiagnosticSummaryTests: XCTestCase {
     }
 
     func testCrashInfoWithNilValues() {
-        let crashInfo = DiagnosticSummary.CrashInfo(
-            exceptionType: nil,
-            signal: nil,
-            terminationReason: nil,
-            virtualMemoryRegionInfo: nil
-        )
+        let crashInfo = DiagnosticSummary.CrashInfo(exceptionType: nil,
+                                                    signal: nil,
+                                                    terminationReason: nil,
+                                                    virtualMemoryRegionInfo: nil)
 
         XCTAssertNil(crashInfo.exceptionType)
         XCTAssertNil(crashInfo.signal)
@@ -94,12 +90,10 @@ final class DiagnosticSummaryTests: XCTestCase {
     }
 
     func testCrashInfoCodable() throws {
-        let crashInfo = DiagnosticSummary.CrashInfo(
-            exceptionType: "EXC_BAD_ACCESS",
-            signal: "SIGSEGV",
-            terminationReason: "Test",
-            virtualMemoryRegionInfo: "0x1000"
-        )
+        let crashInfo = DiagnosticSummary.CrashInfo(exceptionType: "EXC_BAD_ACCESS",
+                                                    signal: "SIGSEGV",
+                                                    terminationReason: "Test",
+                                                    virtualMemoryRegionInfo: "0x1000")
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(crashInfo)
@@ -140,26 +134,20 @@ final class DiagnosticSummaryTests: XCTestCase {
     }
 
     func testCrashInfoEquatable() {
-        let crash1 = DiagnosticSummary.CrashInfo(
-            exceptionType: "EXC_BAD_ACCESS",
-            signal: "SIGSEGV",
-            terminationReason: "Test",
-            virtualMemoryRegionInfo: nil
-        )
+        let crash1 = DiagnosticSummary.CrashInfo(exceptionType: "EXC_BAD_ACCESS",
+                                                 signal: "SIGSEGV",
+                                                 terminationReason: "Test",
+                                                 virtualMemoryRegionInfo: nil)
 
-        let crash2 = DiagnosticSummary.CrashInfo(
-            exceptionType: "EXC_BAD_ACCESS",
-            signal: "SIGSEGV",
-            terminationReason: "Test",
-            virtualMemoryRegionInfo: nil
-        )
+        let crash2 = DiagnosticSummary.CrashInfo(exceptionType: "EXC_BAD_ACCESS",
+                                                 signal: "SIGSEGV",
+                                                 terminationReason: "Test",
+                                                 virtualMemoryRegionInfo: nil)
 
-        let crash3 = DiagnosticSummary.CrashInfo(
-            exceptionType: "EXC_CRASH",
-            signal: "SIGABRT",
-            terminationReason: "Test",
-            virtualMemoryRegionInfo: nil
-        )
+        let crash3 = DiagnosticSummary.CrashInfo(exceptionType: "EXC_CRASH",
+                                                 signal: "SIGABRT",
+                                                 terminationReason: "Test",
+                                                 virtualMemoryRegionInfo: nil)
 
         XCTAssertEqual(crash1, crash2)
         XCTAssertNotEqual(crash1, crash3)
