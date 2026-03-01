@@ -64,10 +64,8 @@ final class MockMetricsProviderTests: XCTestCase {
     }
 
     func testSimulateMultipleMetricPayloads() {
-        let summaries = [
-            MockMetricsProvider.sampleMetricSummary(timeRange: "Range 1"),
-            MockMetricsProvider.sampleMetricSummary(timeRange: "Range 2")
-        ]
+        let summaries = [MockMetricsProvider.sampleMetricSummary(timeRange: "Range 1"),
+                         MockMetricsProvider.sampleMetricSummary(timeRange: "Range 2")]
         mock.simulateMetricPayload(summaries)
 
         XCTAssertEqual(mock.pastMetricSummaries.count, 2)
@@ -150,12 +148,10 @@ final class MockMetricsProviderTests: XCTestCase {
     // MARK: - Sample Data Generator Tests
 
     func testSampleMetricSummary() {
-        let summary = MockMetricsProvider.sampleMetricSummary(
-            timeRange: "Custom Range",
-            peakMemory: 200.0,
-            cpuTime: 100.0,
-            foregroundTime: 200.0
-        )
+        let summary = MockMetricsProvider.sampleMetricSummary(timeRange: "Custom Range",
+                                                              peakMemory: 200.0,
+                                                              cpuTime: 100.0,
+                                                              foregroundTime: 200.0)
 
         XCTAssertEqual(summary.timeRange, "Custom Range")
         XCTAssertEqual(summary.peakMemoryUsageMB, 200.0, accuracy: 0.01)
@@ -164,11 +160,9 @@ final class MockMetricsProviderTests: XCTestCase {
     }
 
     func testSampleDiagnosticSummary() {
-        let summary = MockMetricsProvider.sampleDiagnosticSummary(
-            timeRange: "Custom Range",
-            crashCount: 3,
-            hangCount: 5
-        )
+        let summary = MockMetricsProvider.sampleDiagnosticSummary(timeRange: "Custom Range",
+                                                                  crashCount: 3,
+                                                                  hangCount: 5)
 
         XCTAssertEqual(summary.timeRange, "Custom Range")
         XCTAssertEqual(summary.crashCount, 3)
@@ -176,10 +170,8 @@ final class MockMetricsProviderTests: XCTestCase {
     }
 
     func testSampleCrashInfo() {
-        let crashInfo = MockMetricsProvider.sampleCrashInfo(
-            exceptionType: "EXC_CRASH",
-            signal: "SIGABRT"
-        )
+        let crashInfo = MockMetricsProvider.sampleCrashInfo(exceptionType: "EXC_CRASH",
+                                                            signal: "SIGABRT")
 
         XCTAssertEqual(crashInfo.exceptionType, "EXC_CRASH")
         XCTAssertEqual(crashInfo.signal, "SIGABRT")
