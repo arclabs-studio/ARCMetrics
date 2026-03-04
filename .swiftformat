@@ -34,8 +34,8 @@
 # Wrapping
 --wrapternary before-operators
 
-# Attributes - Always on same line (ARC Labs style)
---type-attributes same-line
+# Attributes - Type attributes on previous line (ARC Labs style)
+--type-attributes prev-line
 --func-attributes same-line
 --stored-var-attributes same-line
 --computed-var-attributes same-line

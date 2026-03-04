@@ -42,10 +42,8 @@ struct ContentView: View {
                 }
                 .tag(3)
         }
-        .alert(
-            "MetricKit Update",
-            isPresented: Bindable(viewModel).showingAlert
-        ) {
+        .alert("MetricKit Update",
+               isPresented: Bindable(viewModel).showingAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.alertMessage)
@@ -101,12 +99,10 @@ struct StatusCard: View {
                     .foregroundColor(.secondary)
             }
 
-            Text(
-                """
-                Payloads: \(viewModel.metricSummaries.count) metrics, \
-                \(viewModel.diagnosticSummaries.count) diagnostics
-                """
-            )
+            Text("""
+            Payloads: \(viewModel.metricSummaries.count) metrics, \
+            \(viewModel.diagnosticSummaries.count) diagnostics
+            """)
             .font(.caption)
             .foregroundColor(.secondary)
         }
@@ -129,40 +125,28 @@ struct LatestMetricsCard: View {
 
             Divider()
 
-            MetricRow(
-                icon: "memorychip",
-                label: "Peak Memory",
-                value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB"
-            )
+            MetricRow(icon: "memorychip",
+                      label: "Peak Memory",
+                      value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB")
             MetricRow(icon: "cpu", label: "Avg CPU", value: "\(String(format: "%.1f", summary.averageCPUPercentage))%")
-            MetricRow(
-                icon: "hourglass",
-                label: "Hang Time",
-                value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s"
-            )
-            MetricRow(
-                icon: "timer",
-                label: "Launch Time",
-                value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s"
-            )
+            MetricRow(icon: "hourglass",
+                      label: "Hang Time",
+                      value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s")
+            MetricRow(icon: "timer",
+                      label: "Launch Time",
+                      value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s")
 
             Divider()
 
-            MetricRow(
-                icon: "gpu",
-                label: "GPU Time",
-                value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s"
-            )
-            MetricRow(
-                icon: "externaldrive",
-                label: "Disk Writes",
-                value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB"
-            )
-            MetricRow(
-                icon: "scroll",
-                label: "Scroll Hitch",
-                value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%"
-            )
+            MetricRow(icon: "gpu",
+                      label: "GPU Time",
+                      value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
+            MetricRow(icon: "externaldrive",
+                      label: "Disk Writes",
+                      value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB")
+            MetricRow(icon: "scroll",
+                      label: "Scroll Hitch",
+                      value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%")
 
             Text("Time Range: \(summary.timeRange)")
                 .font(.caption)

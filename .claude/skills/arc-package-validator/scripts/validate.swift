@@ -12,15 +12,15 @@ enum Severity: String, Comparable, CaseIterable {
     case error = "🔴"
     case warning = "🟡"
     case info = "🔵"
-
+    
     var name: String {
         switch self {
-        case .error: "Error"
-        case .warning: "Warning"
-        case .info: "Info"
+        case .error: return "Error"
+        case .warning: return "Warning"
+        case .info: return "Info"
         }
     }
-
+    
     static func < (lhs: Severity, rhs: Severity) -> Bool {
         let order: [Severity] = [.info, .warning, .error]
         return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
@@ -36,7 +36,7 @@ struct ValidationResult {
     let fix: String?
     let fixCommand: String?
     let canAutoFix: Bool
-
+    
     init(
         category: String,
         name: String,
@@ -64,25 +64,25 @@ struct ValidationReport {
     let results: [ValidationResult]
     let timestamp: Date
     let fixesApplied: [String]
-
+    
     var passedCount: Int { results.filter(\.passed).count }
-    var failedCount: Int { results.count(where: { !$0.passed }) }
-    var errorCount: Int { results.count(where: { !$0.passed && $0.severity == .error }) }
-    var warningCount: Int { results.count(where: { !$0.passed && $0.severity == .warning }) }
-    var infoCount: Int { results.count(where: { !$0.passed && $0.severity == .info }) }
-
-    var score: Int {
+    var failedCount: Int { results.filter { !$0.passed }.count }
+    var errorCount: Int { results.filter { !$0.passed && $0.severity == .error }.count }
+    var warningCount: Int { results.filter { !$0.passed && $0.severity == .warning }.count }
+    var infoCount: Int { results.filter { !$0.passed && $0.severity == .info }.count }
+    
+    var score: Int { 
         guard !results.isEmpty else { return 0 }
-        return (passedCount * 100) / results.count
+        return (passedCount * 100) / results.count 
     }
-
+    
     var status: String {
         if results.allSatisfy(\.passed) { return "✅ All checks passed" }
         if errorCount > 0 { return "❌ Has blocking errors (\(errorCount))" }
         if warningCount > 0 { return "⚠️ Has warnings (\(warningCount))" }
         return "💡 Has suggestions (\(infoCount))"
     }
-
+    
     var hasBlockingErrors: Bool { errorCount > 0 }
 }
 
@@ -92,26 +92,26 @@ struct ValidationReport {
 func shell(_ command: String, at directory: String? = nil) -> (output: String, exitCode: Int32) {
     let task = Process()
     let pipe = Pipe()
-
+    
     task.standardOutput = pipe
     task.standardError = pipe
     task.executableURL = URL(fileURLWithPath: "/bin/zsh")
     task.arguments = ["-c", command]
-
-    if let directory {
+    
+    if let directory = directory {
         task.currentDirectoryURL = URL(fileURLWithPath: directory)
     }
-
+    
     do {
         try task.run()
         task.waitUntilExit()
     } catch {
         return ("Error: \(error.localizedDescription)", 1)
     }
-
+    
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
     let output = String(data: data, encoding: .utf8) ?? ""
-
+    
     return (output.trimmingCharacters(in: .whitespacesAndNewlines), task.terminationStatus)
 }
 
@@ -122,38 +122,39 @@ class ARCPackageValidator {
     let packageName: String
     let fileManager = FileManager.default
     let verbose: Bool
-
+    
     private var results: [ValidationResult] = []
     private var fixesApplied: [String] = []
-
+    
     init(path: String, verbose: Bool = false) throws {
-        let resolvedPath: String = if path == "." {
-            fileManager.currentDirectoryPath
+        let resolvedPath: String
+        if path == "." {
+            resolvedPath = fileManager.currentDirectoryPath
         } else if path.hasPrefix("/") {
-            path
+            resolvedPath = path
         } else {
-            fileManager.currentDirectoryPath + "/" + path
+            resolvedPath = fileManager.currentDirectoryPath + "/" + path
         }
-
-        packagePath = URL(fileURLWithPath: resolvedPath).standardized
-        packageName = packagePath.lastPathComponent
+        
+        self.packagePath = URL(fileURLWithPath: resolvedPath).standardized
+        self.packageName = self.packagePath.lastPathComponent
         self.verbose = verbose
-
-        guard fileManager.fileExists(atPath: packagePath.path) else {
+        
+        guard fileManager.fileExists(atPath: self.packagePath.path) else {
             throw ValidatorError.packageNotFound(resolvedPath)
         }
-
+        
         if verbose {
             print("📦 Validating package: \(packageName)")
-            print("📍 Path: \(packagePath.path)")
+            print("📍 Path: \(self.packagePath.path)")
             print("")
         }
     }
-
+    
     func validate(applyFixes: Bool = false) -> ValidationReport {
         results = []
         fixesApplied = []
-
+        
         // Structure checks
         if verbose { print("📁 Checking structure...") }
         checkPackageSwift(applyFixes: applyFixes)
@@ -164,7 +165,7 @@ class ARCPackageValidator {
         checkTestsDirectory()
         checkDocumentation(applyFixes: applyFixes)
         checkGitignore(applyFixes: applyFixes)
-
+        
         // Configuration checks
         if verbose { print("⚙️ Checking configuration...") }
         checkARCDevTools()
@@ -172,21 +173,21 @@ class ARCPackageValidator {
         checkSwiftFormat(applyFixes: applyFixes)
         checkGitHubWorkflows(applyFixes: applyFixes)
         checkMakefile()
-
+        
         // README content checks
         if verbose { print("📖 Checking README content...") }
         checkReadmeContent()
-
+        
         // Code quality checks
         if verbose { print("🧹 Checking code quality...") }
         runSwiftLintCheck()
         runSwiftFormatCheck()
         checkSwiftBuild()
-
+        
         // Test checks
         if verbose { print("🧪 Checking tests...") }
         checkTestsExist()
-
+        
         return ValidationReport(
             packageName: packageName,
             packagePath: packagePath.path,
@@ -195,25 +196,25 @@ class ARCPackageValidator {
             fixesApplied: fixesApplied
         )
     }
-
+    
     // MARK: - Helper Methods
-
+    
     private func fileExists(_ relativePath: String) -> Bool {
         let path = packagePath.appendingPathComponent(relativePath)
         return fileManager.fileExists(atPath: path.path)
     }
-
+    
     private func directoryExists(_ relativePath: String) -> Bool {
         var isDirectory: ObjCBool = false
         let path = packagePath.appendingPathComponent(relativePath)
         return fileManager.fileExists(atPath: path.path, isDirectory: &isDirectory) && isDirectory.boolValue
     }
-
+    
     private func readFile(_ relativePath: String) -> String? {
         let path = packagePath.appendingPathComponent(relativePath)
         return try? String(contentsOf: path, encoding: .utf8)
     }
-
+    
     private func createDirectory(_ relativePath: String) -> Bool {
         let path = packagePath.appendingPathComponent(relativePath)
         do {
@@ -223,7 +224,7 @@ class ARCPackageValidator {
             return false
         }
     }
-
+    
     private func writeFile(_ relativePath: String, content: String) -> Bool {
         let path = packagePath.appendingPathComponent(relativePath)
         do {
@@ -233,7 +234,7 @@ class ARCPackageValidator {
             return false
         }
     }
-
+    
     private func addResult(_ result: ValidationResult) {
         results.append(result)
         if verbose {
@@ -241,12 +242,12 @@ class ARCPackageValidator {
             print("  \(icon) \(result.name): \(result.message)")
         }
     }
-
+    
     // MARK: - Structure Checks
-
-    private func checkPackageSwift(applyFixes _: Bool) {
+    
+    private func checkPackageSwift(applyFixes: Bool) {
         let category = "Structure"
-
+        
         guard fileExists("Package.swift") else {
             addResult(ValidationResult(
                 category: category,
@@ -258,7 +259,7 @@ class ARCPackageValidator {
             ))
             return
         }
-
+        
         guard let content = readFile("Package.swift") else {
             addResult(ValidationResult(
                 category: category,
@@ -269,10 +270,10 @@ class ARCPackageValidator {
             ))
             return
         }
-
+        
         // Check swift-tools-version
-        let hasCorrectVersion = content.contains("swift-tools-version: 6.0") ||
-            content.contains("swift-tools-version:6.0")
+        let hasCorrectVersion = content.contains("swift-tools-version: 6.0") || 
+                                content.contains("swift-tools-version:6.0")
         addResult(ValidationResult(
             category: category,
             name: "Swift tools version",
@@ -281,7 +282,7 @@ class ARCPackageValidator {
             message: hasCorrectVersion ? "Using swift-tools-version 6.0" : "Should use swift-tools-version: 6.0",
             fix: hasCorrectVersion ? nil : "Update first line to: // swift-tools-version: 6.0"
         ))
-
+        
         // Check iOS platform
         let hasiOS17 = content.contains(".iOS(.v17)")
         addResult(ValidationResult(
@@ -292,7 +293,7 @@ class ARCPackageValidator {
             message: hasiOS17 ? "iOS 17+ platform configured" : "Missing iOS 17+ platform requirement",
             fix: hasiOS17 ? nil : "Add platforms: [.iOS(.v17), .macOS(.v14), .watchOS(.v10), .tvOS(.v17)]"
         ))
-
+        
         // Check strict concurrency
         let hasStrictConcurrency = content.contains("StrictConcurrency")
         addResult(ValidationResult(
@@ -304,8 +305,8 @@ class ARCPackageValidator {
             fix: hasStrictConcurrency ? nil : "Add swiftSettings: [.enableExperimentalFeature(\"StrictConcurrency\")]"
         ))
     }
-
-    private func checkReadme(applyFixes _: Bool) {
+    
+    private func checkReadme(applyFixes: Bool) {
         let exists = fileExists("README.md")
         addResult(ValidationResult(
             category: "Structure",
@@ -316,8 +317,8 @@ class ARCPackageValidator {
             fix: exists ? nil : "Create README.md following ARC Labs template"
         ))
     }
-
-    private func checkLicense(applyFixes _: Bool) {
+    
+    private func checkLicense(applyFixes: Bool) {
         let exists = fileExists("LICENSE")
         addResult(ValidationResult(
             category: "Structure",
@@ -328,24 +329,24 @@ class ARCPackageValidator {
             fix: exists ? nil : "Add MIT LICENSE file"
         ))
     }
-
+    
     private func checkChangelog(applyFixes: Bool) {
         let exists = fileExists("CHANGELOG.md")
-
-        if !exists, applyFixes {
+        
+        if !exists && applyFixes {
             let template = """
             # Changelog
-
+            
             All notable changes to this project will be documented in this file.
-
+            
             The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
             and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
+            
             ## [Unreleased]
-
+            
             ### Added
             - Initial release
-
+            
             """
             if writeFile("CHANGELOG.md", content: template) {
                 fixesApplied.append("Created CHANGELOG.md")
@@ -359,7 +360,7 @@ class ARCPackageValidator {
                 return
             }
         }
-
+        
         addResult(ValidationResult(
             category: "Structure",
             name: "CHANGELOG.md exists",
@@ -370,11 +371,11 @@ class ARCPackageValidator {
             canAutoFix: true
         ))
     }
-
+    
     private func checkSourcesDirectory() {
         let path = "Sources/\(packageName)"
         let exists = directoryExists(path)
-
+        
         addResult(ValidationResult(
             category: "Structure",
             name: "Sources directory",
@@ -384,11 +385,11 @@ class ARCPackageValidator {
             fix: exists ? nil : "Create Sources/\(packageName)/ directory"
         ))
     }
-
+    
     private func checkTestsDirectory() {
         let path = "Tests/\(packageName)Tests"
         let exists = directoryExists(path)
-
+        
         addResult(ValidationResult(
             category: "Structure",
             name: "Tests directory",
@@ -398,35 +399,35 @@ class ARCPackageValidator {
             fix: exists ? nil : "Create Tests/\(packageName)Tests/ directory"
         ))
     }
-
+    
     private func checkDocumentation(applyFixes: Bool) {
         let path = "Documentation.docc"
         var exists = directoryExists(path)
-
-        if !exists, applyFixes {
+        
+        if !exists && applyFixes {
             if createDirectory(path) {
                 let docContent = """
                 # ``\(packageName)``
-
+                
                 Brief description of what \(packageName) does.
-
+                
                 ## Overview
-
+                
                 Provide a detailed overview of the package functionality.
-
+                
                 ## Topics
-
+                
                 ### Essentials
-
+                
                 - ``\(packageName)``
-
+                
                 """
                 _ = writeFile("\(path)/\(packageName).md", content: docContent)
                 fixesApplied.append("Created Documentation.docc/ with template")
                 exists = true
             }
         }
-
+        
         addResult(ValidationResult(
             category: "Structure",
             name: "Documentation.docc",
@@ -437,8 +438,8 @@ class ARCPackageValidator {
             canAutoFix: true
         ))
     }
-
-    private func checkGitignore(applyFixes _: Bool) {
+    
+    private func checkGitignore(applyFixes: Bool) {
         let exists = fileExists(".gitignore")
         addResult(ValidationResult(
             category: "Structure",
@@ -449,46 +450,43 @@ class ARCPackageValidator {
             fix: exists ? nil : "Add .gitignore file"
         ))
     }
-
+    
     // MARK: - Configuration Checks
-
+    
     private func checkARCDevTools() {
         let gitmodules = fileExists(".gitmodules")
         var hasARCDevTools = false
-
+        
         if gitmodules, let content = readFile(".gitmodules") {
             hasARCDevTools = content.contains("ARCDevTools")
         }
-
+        
         // Also check if directory exists
         let dirExists = directoryExists("ARCDevTools")
         let isValid = hasARCDevTools && dirExists
-
+        
         addResult(ValidationResult(
             category: "Configuration",
             name: "ARCDevTools integration",
             passed: isValid,
             severity: .error,
             message: isValid ? "ARCDevTools integrated as submodule" : "ARCDevTools not found or not initialized",
-            fix: isValid
-                ? nil
-                :
-                "git submodule add https://github.com/arclabs-studio/ARCDevTools && git submodule update --init --recursive",
+            fix: isValid ? nil : "git submodule add https://github.com/arclabs-studio/ARCDevTools && git submodule update --init --recursive",
             fixCommand: "git submodule add https://github.com/arclabs-studio/ARCDevTools"
         ))
     }
-
+    
     private func checkSwiftLint(applyFixes: Bool) {
         var exists = fileExists(".swiftlint.yml")
-
-        if !exists, applyFixes, fileExists("ARCDevTools/configs/swiftlint.yml") {
+        
+        if !exists && applyFixes && fileExists("ARCDevTools/configs/swiftlint.yml") {
             let (_, exitCode) = shell("cp ARCDevTools/configs/swiftlint.yml .swiftlint.yml", at: packagePath.path)
             if exitCode == 0 {
                 fixesApplied.append("Copied .swiftlint.yml from ARCDevTools")
                 exists = true
             }
         }
-
+        
         addResult(ValidationResult(
             category: "Configuration",
             name: ".swiftlint.yml",
@@ -500,18 +498,18 @@ class ARCPackageValidator {
             canAutoFix: true
         ))
     }
-
+    
     private func checkSwiftFormat(applyFixes: Bool) {
         var exists = fileExists(".swiftformat")
-
-        if !exists, applyFixes, fileExists("ARCDevTools/configs/swiftformat") {
+        
+        if !exists && applyFixes && fileExists("ARCDevTools/configs/swiftformat") {
             let (_, exitCode) = shell("cp ARCDevTools/configs/swiftformat .swiftformat", at: packagePath.path)
             if exitCode == 0 {
                 fixesApplied.append("Copied .swiftformat from ARCDevTools")
                 exists = true
             }
         }
-
+        
         addResult(ValidationResult(
             category: "Configuration",
             name: ".swiftformat",
@@ -523,24 +521,24 @@ class ARCPackageValidator {
             canAutoFix: true
         ))
     }
-
+    
     private func checkGitHubWorkflows(applyFixes: Bool) {
         let workflowsDir = ".github/workflows"
         var exists = directoryExists(workflowsDir)
-
-        if !exists, applyFixes {
+        
+        if !exists && applyFixes {
             if createDirectory(workflowsDir) {
                 fixesApplied.append("Created .github/workflows/ directory")
                 exists = true
             }
         }
-
+        
         if exists {
             // Check for CI workflow
-            let hasCI = fileExists("\(workflowsDir)/ci.yml") ||
-                fileExists("\(workflowsDir)/quality.yml") ||
-                fileExists("\(workflowsDir)/tests.yml")
-
+            let hasCI = fileExists("\(workflowsDir)/ci.yml") || 
+                       fileExists("\(workflowsDir)/quality.yml") ||
+                       fileExists("\(workflowsDir)/tests.yml")
+            
             addResult(ValidationResult(
                 category: "Configuration",
                 name: "GitHub CI workflow",
@@ -562,7 +560,7 @@ class ARCPackageValidator {
             ))
         }
     }
-
+    
     private func checkMakefile() {
         let exists = fileExists("Makefile")
         addResult(ValidationResult(
@@ -574,12 +572,12 @@ class ARCPackageValidator {
             fix: exists ? nil : "Run ./ARCDevTools/arcdevtools-setup to generate Makefile"
         ))
     }
-
+    
     // MARK: - README Content Checks
-
+    
     private func checkReadmeContent() {
         guard let content = readFile("README.md") else { return }
-
+        
         // Check badges
         let hasBadges = content.contains("img.shields.io")
         addResult(ValidationResult(
@@ -590,7 +588,7 @@ class ARCPackageValidator {
             message: hasBadges ? "Badges found" : "No badges found in README",
             fix: hasBadges ? nil : "Add Swift, Platforms, and License badges at the top"
         ))
-
+        
         // Check required sections
         let sections: [(String, String, Severity)] = [
             ("Overview", "## 🎯 Overview", .warning),
@@ -600,12 +598,12 @@ class ARCPackageValidator {
             ("License section", "## 📄 License", .warning),
             ("Architecture", "## 🏗️", .info),
             ("Testing", "## 🧪", .info),
-            ("Contributing", "## 🤝", .info)
+            ("Contributing", "## 🤝", .info),
         ]
-
+        
         for (name, marker, severity) in sections {
-            let hasSection = content.contains(marker) ||
-                content.lowercased().contains("## \(name.lowercased())")
+            let hasSection = content.contains(marker) || 
+                           content.lowercased().contains("## \(name.lowercased())")
             addResult(ValidationResult(
                 category: "Documentation",
                 name: "README \(name)",
@@ -615,7 +613,7 @@ class ARCPackageValidator {
                 fix: hasSection ? nil : "Add \(marker) section to README"
             ))
         }
-
+        
         // Check for code examples
         let hasCodeExamples = content.contains("```swift")
         addResult(ValidationResult(
@@ -627,9 +625,9 @@ class ARCPackageValidator {
             fix: hasCodeExamples ? nil : "Add Swift code examples in Usage section"
         ))
     }
-
+    
     // MARK: - Code Quality Checks
-
+    
     private func runSwiftLintCheck() {
         // Check if SwiftLint is available
         let (_, whichExit) = shell("which swiftlint")
@@ -644,17 +642,17 @@ class ARCPackageValidator {
             ))
             return
         }
-
+        
         // Run SwiftLint
         let (output, exitCode) = shell("swiftlint lint --quiet 2>&1 | head -20", at: packagePath.path)
         let passed = exitCode == 0 && output.isEmpty
-
+        
         var message = passed ? "No SwiftLint issues" : "SwiftLint found issues"
-        if !passed, !output.isEmpty {
+        if !passed && !output.isEmpty {
             let lineCount = output.components(separatedBy: "\n").count
             message = "SwiftLint found \(lineCount) issue(s)"
         }
-
+        
         addResult(ValidationResult(
             category: "Code Quality",
             name: "SwiftLint check",
@@ -665,7 +663,7 @@ class ARCPackageValidator {
             fixCommand: "swiftlint lint --fix"
         ))
     }
-
+    
     private func runSwiftFormatCheck() {
         // Check if SwiftFormat is available
         let (_, whichExit) = shell("which swiftformat")
@@ -680,17 +678,17 @@ class ARCPackageValidator {
             ))
             return
         }
-
+        
         // Run SwiftFormat lint check
         let (output, exitCode) = shell("swiftformat --lint . 2>&1 | head -20", at: packagePath.path)
         let passed = exitCode == 0
-
+        
         var message = passed ? "Code is properly formatted" : "SwiftFormat found formatting issues"
-        if !passed, !output.isEmpty {
-            let lineCount = output.components(separatedBy: "\n").count(where: { !$0.isEmpty })
+        if !passed && !output.isEmpty {
+            let lineCount = output.components(separatedBy: "\n").filter { !$0.isEmpty }.count
             message = "SwiftFormat found \(lineCount) file(s) with formatting issues"
         }
-
+        
         addResult(ValidationResult(
             category: "Code Quality",
             name: "SwiftFormat check",
@@ -701,13 +699,13 @@ class ARCPackageValidator {
             fixCommand: "swiftformat ."
         ))
     }
-
+    
     private func checkSwiftBuild() {
         if verbose { print("  Building package (this may take a moment)...") }
-
+        
         let (output, exitCode) = shell("swift build 2>&1", at: packagePath.path)
         let passed = exitCode == 0
-
+        
         var message = passed ? "Package builds successfully" : "Build failed"
         if !passed {
             // Extract first error
@@ -716,7 +714,7 @@ class ARCPackageValidator {
                 message = "Build failed: \(errorLine.prefix(100))..."
             }
         }
-
+        
         addResult(ValidationResult(
             category: "Code Quality",
             name: "Swift build",
@@ -726,9 +724,9 @@ class ARCPackageValidator {
             fix: passed ? nil : "Fix compilation errors shown by 'swift build'"
         ))
     }
-
+    
     // MARK: - Test Checks
-
+    
     private func checkTestsExist() {
         let testsPath = "Tests/\(packageName)Tests"
         guard directoryExists(testsPath) else {
@@ -742,12 +740,12 @@ class ARCPackageValidator {
             ))
             return
         }
-
+        
         // Check for Swift test files
         let (output, _) = shell("find Tests -name '*.swift' -type f | wc -l", at: packagePath.path)
         let testFileCount = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
         let hasTests = testFileCount > 0
-
+        
         addResult(ValidationResult(
             category: "Testing",
             name: "Test files exist",
@@ -763,11 +761,11 @@ class ARCPackageValidator {
 
 enum ValidatorError: Error, LocalizedError {
     case packageNotFound(String)
-
+    
     var errorDescription: String? {
         switch self {
-        case let .packageNotFound(path):
-            "Package not found at: \(path)"
+        case .packageNotFound(let path):
+            return "Package not found at: \(path)"
         }
     }
 }
@@ -778,10 +776,10 @@ extension ValidationReport {
     func generateMarkdown() -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-
+        
         var output = """
         # 📊 ARC Package Validation Report
-
+        
         | Property | Value |
         |----------|-------|
         | **Package** | \(packageName) |
@@ -789,64 +787,65 @@ extension ValidationReport {
         | **Date** | \(dateFormatter.string(from: timestamp)) |
         | **Status** | \(status) |
         | **Score** | **\(score)%** (\(passedCount)/\(results.count) checks) |
-
+        
         """
-
+        
         // Summary by severity
         if failedCount > 0 {
             output += """
-
+            
             ## 📈 Summary
-
+            
             | Severity | Count |
             |----------|-------|
             | 🔴 Errors | \(errorCount) |
             | 🟡 Warnings | \(warningCount) |
             | 🔵 Info | \(infoCount) |
-
+            
             """
         }
-
+        
         // Fixes applied
         if !fixesApplied.isEmpty {
             output += """
-
+            
             ## 🔧 Fixes Applied
-
+            
             """
             for fix in fixesApplied {
                 output += "- ✅ \(fix)\n"
             }
             output += "\n"
         }
-
+        
         // Group results by category
         let categories = ["Structure", "Configuration", "Documentation", "Code Quality", "Testing"]
-
+        
         for category in categories {
             let categoryResults = results.filter { $0.category == category }
             guard !categoryResults.isEmpty else { continue }
-
+            
             let passed = categoryResults.filter(\.passed)
             let failed = categoryResults.filter { !$0.passed }
-
-            let categoryIcon = switch category {
-            case "Structure": "📁"
-            case "Configuration": "⚙️"
-            case "Documentation": "📖"
-            case "Code Quality": "🧹"
-            case "Testing": "🧪"
-            default: "📋"
+            
+            let categoryIcon: String
+            switch category {
+            case "Structure": categoryIcon = "📁"
+            case "Configuration": categoryIcon = "⚙️"
+            case "Documentation": categoryIcon = "📖"
+            case "Code Quality": categoryIcon = "🧹"
+            case "Testing": categoryIcon = "🧪"
+            default: categoryIcon = "📋"
             }
-
+            
             output += """
-
+            
             ---
-
+            
             ## \(categoryIcon) \(category)
-
+            
             """
-
+            
             // Passed checks
             if !passed.isEmpty {
                 output += "### ✅ Passed (\(passed.count))\n\n"
@@ -855,16 +854,16 @@ extension ValidationReport {
                 }
                 output += "\n"
             }
-
+            
             // Failed checks
             if !failed.isEmpty {
                 output += "### ❌ Issues (\(failed.count))\n\n"
                 for result in failed.sorted(by: { $0.severity > $1.severity }) {
                     output += """
                     #### \(result.severity.rawValue) \(result.name)
-
+                    
                     **Issue:** \(result.message)
-
+                    
                     """
                     if let fix = result.fix {
                         output += "**Fix:** \(fix)\n\n"
@@ -875,44 +874,44 @@ extension ValidationReport {
                 }
             }
         }
-
+        
         // Next steps
         if hasBlockingErrors {
             output += """
-
+            
             ---
-
+            
             ## 🚀 Next Steps
-
+            
             1. Fix all 🔴 **Error** issues before merging to main
             2. Address 🟡 **Warning** issues before next release
             3. Consider 🔵 **Info** suggestions for improvement
-
+            
             Run with `--fix` flag to auto-apply safe fixes.
-
+            
             """
         } else if failedCount > 0 {
             output += """
-
+            
             ---
-
+            
             ## 🚀 Next Steps
-
+            
             No blocking errors! Consider addressing the warnings and suggestions above.
-
+            
             """
         } else {
             output += """
-
+            
             ---
-
+            
             ## 🎉 Congratulations!
-
+            
             This package meets all ARC Labs Studio standards and is ready for release.
-
+            
             """
         }
-
+        
         return output
     }
 }
@@ -921,12 +920,12 @@ extension ValidationReport {
 
 func main() {
     let arguments = CommandLine.arguments
-
+    
     // Parse arguments
     var packagePath = "."
     var shouldFix = false
     var verbose = false
-
+    
     var i = 1
     while i < arguments.count {
         let arg = arguments[i]
@@ -945,16 +944,16 @@ func main() {
         }
         i += 1
     }
-
+    
     do {
         let validator = try ARCPackageValidator(path: packagePath, verbose: verbose)
         let report = validator.validate(applyFixes: shouldFix)
-
+        
         print(report.generateMarkdown())
-
+        
         // Exit with error code if there are blocking errors
         exit(report.hasBlockingErrors ? 1 : 0)
-
+        
     } catch {
         print("❌ Error: \(error.localizedDescription)")
         exit(1)
@@ -965,23 +964,23 @@ func printUsage() {
     print("""
     ARC Package Validator
     Validates Swift Packages against ARC Labs Studio standards
-
+    
     USAGE:
         swift validate.swift [package-path] [options]
-
+    
     ARGUMENTS:
         package-path    Path to the Swift package (default: current directory)
-
+    
     OPTIONS:
         --fix          Apply safe automatic fixes
         --verbose, -v  Show detailed progress
         --help, -h     Show this help message
-
+    
     EXAMPLES:
         swift validate.swift .
         swift validate.swift /path/to/ARCNetworking --fix
         swift validate.swift . --verbose
-
+    
     EXIT CODES:
         0    All checks passed (or only warnings/info)
         1    Has blocking errors

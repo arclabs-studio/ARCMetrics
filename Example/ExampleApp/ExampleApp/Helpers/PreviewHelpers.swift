@@ -11,18 +11,16 @@ import Foundation
 // MARK: - Preview Sample Data
 
 enum PreviewData {
-    static func sampleMetricSummary(
-        timeRange: String = "Jan 7-8, 2025",
-        peakMemory: Double = 185.5,
-        avgMemory: Double = 120.3,
-        cpuTime: Double = 450.0,
-        foregroundTime: Double = 3600.0,
-        hangTime: Double = 1.25,
-        launchTime: Double = 0.85,
-        gpuTime: Double = 12.5,
-        diskWrites: Double = 45.8,
-        scrollHitch: Double = 3.2
-    ) -> MetricSummary {
+    static func sampleMetricSummary(timeRange: String = "Jan 7-8, 2025",
+                                    peakMemory: Double = 185.5,
+                                    avgMemory: Double = 120.3,
+                                    cpuTime: Double = 450.0,
+                                    foregroundTime: Double = 3600.0,
+                                    hangTime: Double = 1.25,
+                                    launchTime: Double = 0.85,
+                                    gpuTime: Double = 12.5,
+                                    diskWrites: Double = 45.8,
+                                    scrollHitch: Double = 3.2) -> MetricSummary {
         var summary = MetricSummary(timeRange: timeRange)
         summary.peakMemoryUsageMB = peakMemory
         summary.averageMemoryUsageMB = avgMemory
@@ -41,11 +39,9 @@ enum PreviewData {
         return summary
     }
 
-    static func sampleDiagnosticSummary(
-        timeRange: String = "Jan 7-8, 2025",
-        crashCount: Int = 2,
-        hangCount: Int = 5
-    ) -> DiagnosticSummary {
+    static func sampleDiagnosticSummary(timeRange: String = "Jan 7-8, 2025",
+                                        crashCount: Int = 2,
+                                        hangCount: Int = 5) -> DiagnosticSummary {
         var summary = DiagnosticSummary(timeRange: timeRange)
         summary.crashCount = crashCount
         summary.hangCount = hangCount
@@ -55,18 +51,14 @@ enum PreviewData {
     }
 
     static var sampleMetricSummaries: [MetricSummary] {
-        [
-            sampleMetricSummary(timeRange: "Jan 7-8, 2025", peakMemory: 185.5, gpuTime: 12.5, scrollHitch: 3.2),
-            sampleMetricSummary(timeRange: "Jan 6-7, 2025", peakMemory: 165.2, gpuTime: 8.3, scrollHitch: 2.1),
-            sampleMetricSummary(timeRange: "Jan 5-6, 2025", peakMemory: 210.8, gpuTime: 25.7, scrollHitch: 7.5)
-        ]
+        [sampleMetricSummary(timeRange: "Jan 7-8, 2025", peakMemory: 185.5, gpuTime: 12.5, scrollHitch: 3.2),
+         sampleMetricSummary(timeRange: "Jan 6-7, 2025", peakMemory: 165.2, gpuTime: 8.3, scrollHitch: 2.1),
+         sampleMetricSummary(timeRange: "Jan 5-6, 2025", peakMemory: 210.8, gpuTime: 25.7, scrollHitch: 7.5)]
     }
 
     static var sampleDiagnosticSummaries: [DiagnosticSummary] {
-        [
-            sampleDiagnosticSummary(timeRange: "Jan 7-8, 2025", crashCount: 2, hangCount: 5),
-            sampleDiagnosticSummary(timeRange: "Jan 5-6, 2025", crashCount: 0, hangCount: 3)
-        ]
+        [sampleDiagnosticSummary(timeRange: "Jan 7-8, 2025", crashCount: 2, hangCount: 5),
+         sampleDiagnosticSummary(timeRange: "Jan 5-6, 2025", crashCount: 0, hangCount: 3)]
     }
 }
 

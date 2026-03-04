@@ -19,13 +19,11 @@ struct SimulatorsView: View {
         NavigationStack {
             List {
                 Section {
-                    Text(
-                        """
-                        These simulators help you test how ARCMetrics captures different \
-                        performance scenarios. MetricKit aggregates data over time, so \
-                        effects may appear in payloads after 24-48 hours.
-                        """
-                    )
+                    Text("""
+                    These simulators help you test how ARCMetrics captures different \
+                    performance scenarios. MetricKit aggregates data over time, so \
+                    effects may appear in payloads after 24-48 hours.
+                    """)
                     .font(.caption)
                     .foregroundColor(.secondary)
                 } header: {
@@ -33,48 +31,38 @@ struct SimulatorsView: View {
                 }
 
                 Section {
-                    SimulatorButton(
-                        title: "Memory Pressure",
-                        icon: "memorychip.fill",
-                        color: .blue,
-                        description: "Allocates large arrays to increase memory usage"
-                    ) {
+                    SimulatorButton(title: "Memory Pressure",
+                                    icon: "memorychip.fill",
+                                    color: .blue,
+                                    description: "Allocates large arrays to increase memory usage") {
                         simulateMemoryPressure()
                     }
 
-                    SimulatorButton(
-                        title: "CPU Intensive Task",
-                        icon: "cpu.fill",
-                        color: .orange,
-                        description: "Performs heavy calculations to increase CPU usage"
-                    ) {
+                    SimulatorButton(title: "CPU Intensive Task",
+                                    icon: "cpu.fill",
+                                    color: .orange,
+                                    description: "Performs heavy calculations to increase CPU usage") {
                         simulateCPULoad()
                     }
 
-                    SimulatorButton(
-                        title: "Main Thread Hang",
-                        icon: "hourglass.fill",
-                        color: .red,
-                        description: "Blocks the main thread for 1 second"
-                    ) {
+                    SimulatorButton(title: "Main Thread Hang",
+                                    icon: "hourglass.fill",
+                                    color: .red,
+                                    description: "Blocks the main thread for 1 second") {
                         simulateMainThreadHang()
                     }
 
-                    SimulatorButton(
-                        title: "Background Work",
-                        icon: "gearshape.2.fill",
-                        color: .purple,
-                        description: "Simulates background processing"
-                    ) {
+                    SimulatorButton(title: "Background Work",
+                                    icon: "gearshape.2.fill",
+                                    color: .purple,
+                                    description: "Simulates background processing") {
                         simulateBackgroundWork()
                     }
 
-                    SimulatorButton(
-                        title: "Network Activity",
-                        icon: "network",
-                        color: .green,
-                        description: "Simulates network requests"
-                    ) {
+                    SimulatorButton(title: "Network Activity",
+                                    icon: "network",
+                                    color: .green,
+                                    description: "Simulates network requests") {
                         simulateNetworkActivity()
                     }
                 } header: {
@@ -82,30 +70,24 @@ struct SimulatorsView: View {
                 }
 
                 Section {
-                    SimulatorButton(
-                        title: "GPU Intensive Work",
-                        icon: "gpu",
-                        color: .cyan,
-                        description: "Performs graphics-intensive operations"
-                    ) {
+                    SimulatorButton(title: "GPU Intensive Work",
+                                    icon: "gpu",
+                                    color: .cyan,
+                                    description: "Performs graphics-intensive operations") {
                         simulateGPUWork()
                     }
 
-                    SimulatorButton(
-                        title: "Disk Write Activity",
-                        icon: "externaldrive.fill",
-                        color: .indigo,
-                        description: "Writes data to disk repeatedly"
-                    ) {
+                    SimulatorButton(title: "Disk Write Activity",
+                                    icon: "externaldrive.fill",
+                                    color: .indigo,
+                                    description: "Writes data to disk repeatedly") {
                         simulateDiskWrites()
                     }
 
-                    SimulatorButton(
-                        title: "Scroll Hitch Generator",
-                        icon: "scroll.fill",
-                        color: .pink,
-                        description: "Creates scroll performance issues"
-                    ) {
+                    SimulatorButton(title: "Scroll Hitch Generator",
+                                    icon: "scroll.fill",
+                                    color: .pink,
+                                    description: "Creates scroll performance issues") {
                         simulateScrollHitches()
                     }
                 } header: {
@@ -256,13 +238,11 @@ extension SimulatorsView {
             var successCount = 0
             var failureCount = 0
 
-            let urls = [
-                "https://api.github.com/users/github",
-                "https://api.github.com/repos/apple/swift",
-                "https://api.github.com/orgs/apple",
-                "https://httpbin.org/get",
-                "https://httpbin.org/uuid"
-            ]
+            let urls = ["https://api.github.com/users/github",
+                        "https://api.github.com/repos/apple/swift",
+                        "https://api.github.com/orgs/apple",
+                        "https://httpbin.org/get",
+                        "https://httpbin.org/uuid"]
 
             for (index, urlString) in urls.enumerated() {
                 guard let url = URL(string: urlString) else { continue }

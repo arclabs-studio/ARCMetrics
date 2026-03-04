@@ -113,7 +113,7 @@ custom_rules:
   # ViewModels should use @Observable
   observable_viewmodel:
     name: "ViewModels should use @Observable"
-    regex: "final\\s+class\\s+\\w+ViewModel(?!.*@Observable)"
+    regex: "(?<!@Observable\\n)final\\s+class\\s+\\w+ViewModel"
     excluded_match_kinds:
       - comment
       - doccomment
