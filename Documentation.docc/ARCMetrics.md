@@ -8,8 +8,6 @@ ARCMetrics provides a simplified interface to Apple's MetricKit framework, enabl
 
 MetricKit delivers aggregated reports approximately every 24 hours containing metrics about memory usage, CPU utilization, launch times, hangs, and network activity. Diagnostic reports for crashes and hangs are delivered immediately in iOS 15+ and macOS 12+.
 
-![ARCMetrics Banner](arcmetrics-banner)
-
 ### Key Features
 
 - **Simplified API**: Easy-to-use callbacks for receiving metrics and diagnostics

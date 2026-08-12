@@ -1,11 +1,8 @@
-# ARCDevTools Workflow Template
-# Source: https://github.com/arclabs-studio/ARCDevTools/workflows/tests.yml
+# ARCDevTools Workflow Template (Swift Package)
+# Source: https://github.com/arclabs-studio/ARCDevTools/workflows-spm/tests.yml
 #
 # This file was copied from ARCDevTools. You can customize it for your project.
-# To update: re-run ./ARCDevTools/arcdevtools-setup or manually copy from ARCDevTools/workflows/
-#
-# NOTE: This package only supports iOS and visionOS (MetricKit is not available on macOS/Linux).
-# Tests run using xcodebuild with iOS simulator.
+# To update: re-run ./ARCDevTools/arcdevtools-setup or manually copy from ARCDevTools/workflows-spm/
 name: Tests
 
 on:
@@ -15,8 +12,28 @@ on:
     branches: [main, develop]
 
 jobs:
-  test-ios:
-    name: Build & Test (iOS)
+  check-platforms:
+    name: Check Platform Support
+    runs-on: ubuntu-latest
+    outputs:
+      supports-linux: ${{ steps.check.outputs.supports-linux }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if Apple-only
+        id: check
+        run: |
+          if grep -qE "^[[:space:]]*platforms:[[:space:]]*\[" Package.swift; then
+            echo "supports-linux=false" >> $GITHUB_OUTPUT
+            echo "📱 Package has platform constraints - Linux build will be skipped"
+          else
+            echo "supports-linux=true" >> $GITHUB_OUTPUT
+            echo "🐧 Package supports Linux"
+          fi
+
+  test-macos:
+    name: Build (macOS)
     runs-on: macos-15
 
     steps:
@@ -25,14 +42,28 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Display Xcode version
-        run: xcodebuild -version
+      - name: Display Swift version
+        run: swift --version
 
-      - name: Build and test for iOS
-        run: |
-          xcodebuild test \
-            -scheme ARCMetrics \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -skipPackagePluginValidation \
-            -skipMacroValidation \
-            | xcpretty || true
+      - name: Run tests
+        run: swift test --parallel
+
+  test-linux:
+    name: Build (Linux)
+    needs: check-platforms
+    if: needs.check-platforms.outputs.supports-linux == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: swift:6.0
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Display Swift version
+        run: swift --version
+
+      - name: Run tests
+        run: swift test --parallel

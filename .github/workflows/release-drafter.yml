@@ -1,8 +1,8 @@
-# ARCDevTools Workflow Template
-# Source: https://github.com/arclabs-studio/ARCDevTools/workflows/release-drafter.yml
+# ARCDevTools Workflow Template (Swift Package)
+# Source: https://github.com/arclabs-studio/ARCDevTools/workflows-spm/release-drafter.yml
 #
 # This file was copied from ARCDevTools. You can customize it for your project.
-# To update: re-run ./ARCDevTools/arcdevtools-setup or manually copy from ARCDevTools/workflows/
+# To update: re-run ./ARCDevTools/arcdevtools-setup or manually copy from ARCDevTools/workflows-spm/
 name: Release Drafter
 
 on:
