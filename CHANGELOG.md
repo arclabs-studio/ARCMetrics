@@ -5,7 +5,11 @@ All notable changes to ARCMetrics will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-08-21
+
+First public release of **ARCMetrics**.
+
+ARC Labs Studio re-baselined every package at `1.0.0` for its first product launch. The pre-launch version history (0.1.0 → 1.0.1) never corresponded to a release the studio stood behind; those tags and GitHub Releases have been removed and the notes are preserved below under [Pre-1.0 history](#pre-10-history-untagged).
 
 ### Added
 
@@ -20,27 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`MetricKitProvider.isCollecting`**.
 - Public memberwise initialisers on `DiagnosticSummary.CrashInfo` and `DiagnosticSummary.HangInfo`, so consumers can build fixtures.
 - 33 Swift Testing cases covering histogram arithmetic, `Codable` compatibility, and provider state. New tests are written in Swift Testing; the existing XCTest suite still runs.
-
-### Changed
-
-- **`MetricKitProvider` is now internally synchronised.** Callbacks were bare `var`s under `@unchecked Sendable`, written from the main thread at launch and read from MetricKit's delivery thread. All mutable state moved behind one `OSAllocatedUnfairLock`; callbacks are copied out before invocation, so a re-entrant handler cannot deadlock.
-- **`startCollecting()` / `stopCollecting()` are idempotent.** A duplicate `startCollecting()` previously called `MXMetricManager.add(self)` again and delivered every payload twice — reachable in any app that rebuilds its composition root.
-- **`pastMetricSummaries` / `pastDiagnosticSummaries` are memoized** by reporting interval instead of reprocessing the whole history on every read.
-- Per-payload logging demoted to `.debug`; `.error` reserved for payloads that contain a crash.
-- DocC catalog moved to `Sources/ARCMetrics/ARCMetrics.docc/` so its articles build.
-
-### Fixed
-
-- `MetricSummary` and `DiagnosticSummary` decode tolerantly. Synthesized `Codable` required every key, so summaries archived before `interval` existed would have failed to decode.
-- README no longer advertises a "Battery / Energy" metric this package has never collected.
-
-## [1.0.0] - 2026-08-20
-
-First public release of **ARCMetrics**.
-
-ARC Labs Studio re-baselined every package at `1.0.0` for its first product launch. The pre-launch version history (0.1.0 → 1.0.1) never corresponded to a release the studio stood behind; those tags and GitHub Releases have been removed and the notes are preserved below under [Pre-1.0 history](#pre-10-history-untagged).
-
-### Added
 
 - **`INTERNAL-USE.md`** — documents ARC Labs Studio's self-grant for commercial use of its own products under the new licence.
 
@@ -66,6 +49,12 @@ ARC Labs Studio re-baselined every package at `1.0.0` for its first product laun
 
 ### Changed
 
+- **`MetricKitProvider` is now internally synchronised.** Callbacks were bare `var`s under `@unchecked Sendable`, written from the main thread at launch and read from MetricKit's delivery thread. All mutable state moved behind one `OSAllocatedUnfairLock`; callbacks are copied out before invocation, so a re-entrant handler cannot deadlock.
+- **`startCollecting()` / `stopCollecting()` are idempotent.** A duplicate `startCollecting()` previously called `MXMetricManager.add(self)` again and delivered every payload twice — reachable in any app that rebuilds its composition root.
+- **`pastMetricSummaries` / `pastDiagnosticSummaries` are memoized** by reporting interval instead of reprocessing the whole history on every read.
+- Per-payload logging demoted to `.debug`; `.error` reserved for payloads that contain a crash.
+- DocC catalog moved to `Sources/ARCMetrics/ARCMetrics.docc/` so its articles build.
+
 - **BREAKING:** Renamed library from `ARCMetricsKit` to `ARCMetrics` for consistency with ARC Labs package naming standards
 - Renamed `Sources/ARCMetricsKit/` to `Sources/ARCMetrics/`
 - Renamed `Tests/ARCMetricsKitTests/` to `Tests/ARCMetricsTests/`
@@ -81,6 +70,11 @@ ARC Labs Studio re-baselined every package at `1.0.0` for its first product laun
 - **License** — relicensed from MIT to [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). Source-available and free for non-commercial use; commercial use requires a separate licence from ARC Labs Studio. ARC Labs Studio's own products are covered by an internal grant — see `INTERNAL-USE.md`.
 
 ---
+
+### Fixed
+
+- `MetricSummary` and `DiagnosticSummary` decode tolerantly. Synthesized `Codable` required every key, so summaries archived before `interval` existed would have failed to decode.
+- README no longer advertises a "Battery / Energy" metric this package has never collected.
 
 ## Pre-1.0 history (untagged)
 
