@@ -14,6 +14,10 @@ import Foundation
 ///
 /// ## Topics
 ///
+/// ### Reporting Period
+/// - ``interval``
+/// - ``timeRange``
+///
 /// ### Memory Metrics
 /// - ``peakMemoryUsageMB``
 /// - ``averageMemoryUsageMB``
@@ -47,9 +51,21 @@ import Foundation
 public struct MetricSummary: Sendable, Codable, Equatable, Hashable {
     // MARK: - Properties
 
-    /// Time range covered by this metric summary.
+    /// The period this summary covers, as machine-readable data.
+    ///
+    /// Prefer this over ``timeRange`` for anything other than display: it is
+    /// locale-independent and comparable, which is what a consumer needs to
+    /// deduplicate payloads across launches.
+    ///
+    /// `nil` only for summaries built through ``init(timeRange:)``, which exists
+    /// for source compatibility with releases before the interval was carried.
+    public let interval: DateInterval?
+
+    /// Time range covered by this metric summary, formatted for display.
     ///
     /// MetricKit aggregates metrics over time windows, typically 24 hours.
+    ///
+    /// - Important: Locale-dependent. Never parse it — use ``interval``.
     public let timeRange: String
 
     // MARK: Memory
@@ -175,8 +191,60 @@ public struct MetricSummary: Sendable, Codable, Equatable, Hashable {
 
     // MARK: - Initialization
 
+    /// Creates a summary covering `interval`.
+    ///
+    /// - Parameter interval: The period MetricKit aggregated these metrics over.
+    public init(interval: DateInterval) {
+        self.interval = interval
+        timeRange = Self.displayString(for: interval)
+    }
+
+    /// Creates a summary from a pre-formatted display range, leaving
+    /// ``interval`` `nil`.
+    ///
+    /// - Parameter timeRange: Display string for the reporting period.
     public init(timeRange: String) {
+        interval = nil
         self.timeRange = timeRange
+    }
+
+    // MARK: - Decoding
+
+    /// Decodes tolerantly: every field except ``timeRange`` falls back to its
+    /// default when absent, so payloads archived by earlier releases — which had
+    /// no ``interval`` — still decode.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        timeRange = try container.decode(String.self, forKey: .timeRange)
+        interval = try container.decodeIfPresent(DateInterval.self, forKey: .interval)
+        peakMemoryUsageMB = try container.decodeIfPresent(Double.self, forKey: .peakMemoryUsageMB) ?? 0
+        averageMemoryUsageMB = try container.decodeIfPresent(Double.self, forKey: .averageMemoryUsageMB) ?? 0
+        cumulativeCPUTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .cumulativeCPUTimeSeconds) ?? 0
+        totalHangTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .totalHangTimeSeconds) ?? 0
+        foregroundTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .foregroundTimeSeconds) ?? 0
+        backgroundTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .backgroundTimeSeconds) ?? 0
+        averageLaunchTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .averageLaunchTimeSeconds) ?? 0
+        cellularDownloadMB = try container.decodeIfPresent(Double.self, forKey: .cellularDownloadMB) ?? 0
+        cellularUploadMB = try container.decodeIfPresent(Double.self, forKey: .cellularUploadMB) ?? 0
+        wifiDownloadMB = try container.decodeIfPresent(Double.self, forKey: .wifiDownloadMB) ?? 0
+        wifiUploadMB = try container.decodeIfPresent(Double.self, forKey: .wifiUploadMB) ?? 0
+        cumulativeGPUTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .cumulativeGPUTimeSeconds) ?? 0
+        cumulativeDiskWritesMB = try container.decodeIfPresent(Double.self, forKey: .cumulativeDiskWritesMB) ?? 0
+        scrollHitchTimeRatio = try container.decodeIfPresent(Double.self, forKey: .scrollHitchTimeRatio) ?? 0
+    }
+}
+
+// MARK: - Display Formatting
+
+extension MetricSummary {
+    /// Renders an interval for human consumption.
+    ///
+    /// Uses `Date.formatted(date:time:)` rather than `DateFormatter`, which is
+    /// banned by house rules.
+    static func displayString(for interval: DateInterval) -> String {
+        let start = interval.start.formatted(date: .numeric, time: .shortened)
+        let end = interval.end.formatted(date: .numeric, time: .shortened)
+        return "\(start) - \(end)"
     }
 }
 

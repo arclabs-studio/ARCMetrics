@@ -8,81 +8,55 @@
 import ARCLogger
 import Foundation
 
-#if os(iOS) || os(visionOS)
-import MetricKit
-#endif
-
-/// Processes raw MetricKit payloads into simplified summary models.
+/// Transforms payload sources into the package's summary models.
 ///
-/// This internal class handles the complex MetricKit API and extracts the most
-/// relevant metrics into easy-to-use `MetricSummary` and `DiagnosticSummary` objects.
-///
-/// - Note: MetricKit is only available on iOS and visionOS.
-final class MetricKitPayloadProcessor {
-    private let logger = ARCLogger(category: "MetricKitProcessor")
+/// The processor never imports MetricKit. It reads ``MetricPayloadSource`` and
+/// ``DiagnosticPayloadSource``, which `MXMetricPayload` / `MXDiagnosticPayload`
+/// conform to behind an `#if` in `MetricKitPayloadAdapters.swift`. That seam is
+/// what makes this — the aggregation logic, where the bugs are — testable on
+/// macOS CI with plain structs, and what lets an iOS 27 `MetricReport` reader
+/// slot in beside the legacy one without touching this file.
+struct MetricKitPayloadProcessor: Sendable {
+    // MARK: - Properties
 
-    #if os(iOS) || os(visionOS)
+    private let logger: any Logger
+
+    // MARK: - Initialization
+
+    /// Creates a processor.
+    ///
+    /// - Parameter logger: Sink for processing diagnostics.
+    init(logger: any Logger = ARCLogger(category: "MetricKitProcessor")) {
+        self.logger = logger
+    }
 
     // MARK: - Metric Payload Processing
 
-    /// Processes a metric payload into a simplified summary.
+    /// Transforms a metric payload into a summary.
     ///
-    /// - Parameter payload: Raw MetricKit payload containing aggregated metrics
-    /// - Returns: A simplified `MetricSummary` with key performance indicators
-    func processMetricPayload(_ payload: MXMetricPayload) -> MetricSummary {
-        var summary = MetricSummary(timeRange: formatDateRange(start: payload.timeStampBegin,
-                                                               end: payload.timeStampEnd))
+    /// - Parameter payload: Normalized metric payload.
+    /// - Returns: A ``MetricSummary`` with key performance indicators.
+    func processMetricPayload(_ payload: some MetricPayloadSource) -> MetricSummary {
+        var summary = MetricSummary(interval: payload.interval)
 
-        // Memory metrics
-        if let memory = payload.memoryMetrics {
-            summary.peakMemoryUsageMB = formatBytes(memory.peakMemoryUsage)
-            summary.averageMemoryUsageMB = formatBytes(memory.averageSuspendedMemory.averageMeasurement)
-        }
+        summary.peakMemoryUsageMB = payload.peakMemoryMB ?? 0
+        summary.averageMemoryUsageMB = payload.averageSuspendedMemoryMB ?? 0
+        summary.cumulativeCPUTimeSeconds = payload.cumulativeCPUTimeSeconds ?? 0
+        summary.cumulativeGPUTimeSeconds = payload.cumulativeGPUTimeSeconds ?? 0
+        summary.foregroundTimeSeconds = payload.foregroundTimeSeconds ?? 0
+        summary.backgroundTimeSeconds = payload.backgroundTimeSeconds ?? 0
+        summary.cellularDownloadMB = payload.cellularDownloadMB ?? 0
+        summary.cellularUploadMB = payload.cellularUploadMB ?? 0
+        summary.wifiDownloadMB = payload.wifiDownloadMB ?? 0
+        summary.wifiUploadMB = payload.wifiUploadMB ?? 0
+        summary.cumulativeDiskWritesMB = payload.cumulativeDiskWritesMB ?? 0
 
-        // CPU metrics
-        if let cpu = payload.cpuMetrics {
-            summary.cumulativeCPUTimeSeconds = cpu.cumulativeCPUTime.converted(to: .seconds).value
-        }
+        // MetricKit reports the hitch ratio in 0...1; the model is documented as
+        // a percentage.
+        summary.scrollHitchTimeRatio = (payload.scrollHitchTimeRatio ?? 0) * 100
 
-        // Application responsiveness metrics (Hangs) - iOS 14+
-        if let responsiveness = payload.applicationResponsivenessMetrics {
-            summary.totalHangTimeSeconds = responsiveness.histogrammedApplicationHangTime.totalBucketCountsValue
-        }
-
-        // Application time metrics
-        if let appTime = payload.applicationTimeMetrics {
-            summary.foregroundTimeSeconds = appTime.cumulativeForegroundTime.converted(to: .seconds).value
-            summary.backgroundTimeSeconds = appTime.cumulativeBackgroundTime.converted(to: .seconds).value
-        }
-
-        // Launch metrics
-        if let launch = payload.applicationLaunchMetrics {
-            let histogram = launch.histogrammedTimeToFirstDraw
-            summary.averageLaunchTimeSeconds = calculateHistogramAverage(histogram)
-        }
-
-        // Network metrics
-        if let network = payload.networkTransferMetrics {
-            summary.cellularDownloadMB = formatBytes(network.cumulativeCellularDownload)
-            summary.cellularUploadMB = formatBytes(network.cumulativeCellularUpload)
-            summary.wifiDownloadMB = formatBytes(network.cumulativeWifiDownload)
-            summary.wifiUploadMB = formatBytes(network.cumulativeWifiUpload)
-        }
-
-        // GPU metrics
-        if let gpu = payload.gpuMetrics {
-            summary.cumulativeGPUTimeSeconds = gpu.cumulativeGPUTime.converted(to: .seconds).value
-        }
-
-        // Disk I/O metrics
-        if let diskIO = payload.diskIOMetrics {
-            summary.cumulativeDiskWritesMB = formatBytes(diskIO.cumulativeLogicalWrites)
-        }
-
-        // Animation metrics
-        if let animation = payload.animationMetrics {
-            summary.scrollHitchTimeRatio = animation.scrollHitchTimeRatio.value * 100
-        }
+        summary.totalHangTimeSeconds = Self.weightedTotalSeconds(payload.hangTimeBuckets ?? [])
+        summary.averageLaunchTimeSeconds = Self.weightedAverageSeconds(payload.launchTimeBuckets ?? [])
 
         logger.debug("Processed metric payload for range: \(summary.timeRange)")
 
@@ -91,98 +65,57 @@ final class MetricKitPayloadProcessor {
 
     // MARK: - Diagnostic Payload Processing
 
-    /// Processes a diagnostic payload into a simplified summary.
+    /// Transforms a diagnostic payload into a summary.
     ///
-    /// - Parameter payload: Raw MetricKit diagnostic payload
-    /// - Returns: A simplified `DiagnosticSummary` with crash and hang information
-    func processDiagnosticPayload(_ payload: MXDiagnosticPayload) -> DiagnosticSummary {
-        var summary = DiagnosticSummary(timeRange: formatDateRange(start: payload.timeStampBegin,
-                                                                   end: payload.timeStampEnd))
+    /// - Parameter payload: Normalized diagnostic payload.
+    /// - Returns: A ``DiagnosticSummary`` with crash and hang information.
+    func processDiagnosticPayload(_ payload: some DiagnosticPayloadSource) -> DiagnosticSummary {
+        var summary = DiagnosticSummary(interval: payload.interval)
 
-        // Crash diagnostics
-        if let crashes = payload.crashDiagnostics {
-            summary.crashCount = crashes.count
-            summary.crashes = crashes.compactMap { crash in
-                DiagnosticSummary.CrashInfo(exceptionType: crash.exceptionType.map { String(describing: $0) },
-                                            signal: crash.signal.map { String(describing: $0) },
-                                            terminationReason: crash.terminationReason,
-                                            virtualMemoryRegionInfo: crash.virtualMemoryRegionInfo)
-            }
-            logger.error("Detected \(crashes.count) crash(es)")
+        let crashes = payload.crashes
+        summary.crashCount = crashes.count
+        summary.crashes = crashes.map { crash in
+            DiagnosticSummary.CrashInfo(exceptionType: crash.exceptionType,
+                                        signal: crash.signal,
+                                        terminationReason: crash.terminationReason,
+                                        virtualMemoryRegionInfo: crash.virtualMemoryRegionInfo)
         }
 
-        // Hang diagnostics
-        if let hangs = payload.hangDiagnostics {
-            summary.hangCount = hangs.count
-            summary.hangs = hangs.compactMap { hang in
-                DiagnosticSummary.HangInfo(duration: hang.hangDuration.converted(to: .seconds).value)
-            }
-            logger.warning("Detected \(hangs.count) hang(s)")
-        }
+        let hangs = payload.hangDurationsSeconds
+        summary.hangCount = hangs.count
+        summary.hangs = hangs.map { DiagnosticSummary.HangInfo(duration: $0) }
 
-        // Disk write exceptions
-        if let diskWrites = payload.diskWriteExceptionDiagnostics {
-            summary.diskWriteExceptionCount = diskWrites.count
-        }
+        summary.diskWriteExceptionCount = payload.diskWriteExceptionCount
+        summary.cpuExceptionCount = payload.cpuExceptionCount
 
-        // CPU exceptions
-        if let cpuExceptions = payload.cpuExceptionDiagnostics {
-            summary.cpuExceptionCount = cpuExceptions.count
+        // Only a crash is worth an error-level line; a zero-crash payload is the
+        // common case and used to spam the log at `.error` every 24 hours.
+        if summary.crashCount > 0 {
+            logger.error("Detected \(summary.crashCount) crash(es) in \(summary.timeRange)")
         }
-
         logger.debug("Processed diagnostic payload for range: \(summary.timeRange)")
 
         return summary
     }
-
-    // MARK: - Helpers
-
-    private func calculateHistogramAverage(_ histogram: MXHistogram<UnitDuration>) -> Double {
-        var totalTime: Double = 0
-        var totalCount = 0
-
-        for bucket in histogram.bucketEnumerator {
-            if let bucket = bucket as? MXHistogramBucket<UnitDuration> {
-                let bucketValue = bucket.bucketStart.converted(to: .seconds).value
-                totalTime += bucketValue * Double(bucket.bucketCount)
-                totalCount += bucket.bucketCount
-            }
-        }
-
-        return totalCount > 0 ? totalTime / Double(totalCount) : 0
-    }
-    #endif
-
-    private func formatDateRange(start: Date, end: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
-    }
-
-    private func formatBytes(_ measurement: Measurement<UnitInformationStorage>) -> Double {
-        measurement.converted(to: .megabytes).value
-    }
-
-    private func formatBytes(_ measurement: Measurement<UnitInformationStorage>?) -> Double {
-        guard let measurement else { return 0 }
-        return measurement.converted(to: .megabytes).value
-    }
 }
 
-// MARK: - MXHistogram Extension
+// MARK: - Histogram Arithmetic
 
-#if os(iOS) || os(visionOS)
-extension MXHistogram where UnitType == UnitDuration {
-    /// Calculates the total weighted count from all histogram buckets.
-    fileprivate var totalBucketCountsValue: Double {
-        var total: Double = 0
-        for bucket in bucketEnumerator {
-            if let bucket = bucket as? MXHistogramBucket<UnitDuration> {
-                total += bucket.bucketStart.converted(to: .seconds).value * Double(bucket.bucketCount)
-            }
-        }
-        return total
+extension MetricKitPayloadProcessor {
+    /// Total time represented by a histogram, in seconds.
+    ///
+    /// Weights each bucket by its lower edge, matching MetricKit's own
+    /// convention and this package's behaviour before the seam existed.
+    static func weightedTotalSeconds(_ buckets: [DurationBucket]) -> Double {
+        buckets.reduce(0) { $0 + $1.startSeconds * Double($1.count) }
+    }
+
+    /// Mean duration represented by a histogram, in seconds.
+    ///
+    /// - Returns: `0` for an empty histogram, or one whose buckets are all empty.
+    static func weightedAverageSeconds(_ buckets: [DurationBucket]) -> Double {
+        let count = buckets.reduce(0) { $0 + $1.count }
+        guard count > 0 else { return 0 }
+        return weightedTotalSeconds(buckets) / Double(count)
     }
 }
-#endif
