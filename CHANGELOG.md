@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Signpost tracing** — `SignpostTracing`, with `measure(_:category:operation:)` in sync and async form. The async overload takes `isolation: isolated (any Actor)? = #isolation` and returns `sending T`, so wrapping `@MainActor` work introduces no actor hop and imposes no `Sendable` requirement on the result.
+- **`MetricKitSignpostTracer`** — emits through `mxSignpost` on an `MXMetricManager.makeLogHandle(category:)` handle, so one call feeds both MetricKit's 24-hour aggregate and the live Instruments trace. Only `mxSignpost` populates the CPU / memory / logical-writes measurements; `OSSignposter` on the same handle would not. Falls back to plain `os_signpost` off iOS/visionOS.
+- **`SignpostCategory`** — `ExpressibleByStringLiteral`, with `launch`, `persistence`, `network`, `media`, and `intelligence` as the studio's shared vocabulary.
+- **`SignpostInterval`** — opaque in-flight token carrying the `StaticString` the interval opened with, since the signpost API requires the same literal to close it.
+- **`NoOpSignpostTracer`** — for tests, and as the fallback where signposts are unavailable.
 - **Payload-source seam** — `MetricPayloadSource` / `DiagnosticPayloadSource`, plain protocols in normalized units that `MXMetricPayload` / `MXDiagnosticPayload` conform to behind an `#if`. Makes the transformation layer testable on macOS CI, and is the migration path for iOS 27's `MetricManager` / `MetricReport`.
 - **`MetricSummary.interval` / `DiagnosticSummary.interval`** (`DateInterval?`) — locale-independent, comparable reporting period. Prefer it over `timeRange`, which is display-only.
 - **`MetricKitProvider.configure(logger:)`** — injects any `ARCLogger.Logger`. Call before `startCollecting()`.
