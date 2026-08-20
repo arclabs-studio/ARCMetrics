@@ -129,7 +129,9 @@ MetricKitProvider.shared.onDiagnosticPayloadsReceived = { summaries in
 | **Launches** | Time to first frame |
 | **Network** | Cellular & WiFi usage |
 | **Crashes** | Detailed crash reports |
-| **Battery** | Energy consumption |
+| **GPU** | Cumulative GPU time |
+| **Disk I/O** | Cumulative logical writes |
+| **Animation** | Scroll hitch time ratio |
 
 ---
 
@@ -141,13 +143,16 @@ ARCMetrics/
 ├── Sources/
 │   └── ARCMetrics/
 │       ├── MetricKitProvider.swift       # Singleton, subscribes to MXMetricManager
-│       ├── MetricKitPayloadProcessor.swift  # Transforms payloads → summary models
+│       ├── MetricKitPayloadProcessor.swift  # Transforms payload sources → summary models
+│       ├── Internal/
+│       │   ├── PayloadSources.swift      # Platform-free payload protocols (the seam)
+│       │   └── MetricKitPayloadAdapters.swift  # MXPayload conformances (iOS/visionOS)
 │       ├── Models/
 │       │   ├── MetricSummary.swift       # Performance metrics model
 │       │   └── DiagnosticSummary.swift   # Crash/hang diagnostics model
 │       ├── Protocols/
 │       │   └── MetricsProviding.swift    # Protocol for metrics provider
-│       └── Documentation.docc/           # DocC documentation
+│       └── ARCMetrics.docc/              # DocC documentation
 ├── Tests/
 │   └── ARCMetricsTests/
 └── Example/
