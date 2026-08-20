@@ -5,6 +5,30 @@ All notable changes to ARCMetrics will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Payload-source seam** — `MetricPayloadSource` / `DiagnosticPayloadSource`, plain protocols in normalized units that `MXMetricPayload` / `MXDiagnosticPayload` conform to behind an `#if`. Makes the transformation layer testable on macOS CI, and is the migration path for iOS 27's `MetricManager` / `MetricReport`.
+- **`MetricSummary.interval` / `DiagnosticSummary.interval`** (`DateInterval?`) — locale-independent, comparable reporting period. Prefer it over `timeRange`, which is display-only.
+- **`MetricKitProvider.configure(logger:)`** — injects any `ARCLogger.Logger`. Call before `startCollecting()`.
+- **`MetricKitProvider.isCollecting`**.
+- Public memberwise initialisers on `DiagnosticSummary.CrashInfo` and `DiagnosticSummary.HangInfo`, so consumers can build fixtures.
+- 33 Swift Testing cases covering histogram arithmetic, `Codable` compatibility, and provider state. New tests are written in Swift Testing; the existing XCTest suite still runs.
+
+### Changed
+
+- **`MetricKitProvider` is now internally synchronised.** Callbacks were bare `var`s under `@unchecked Sendable`, written from the main thread at launch and read from MetricKit's delivery thread. All mutable state moved behind one `OSAllocatedUnfairLock`; callbacks are copied out before invocation, so a re-entrant handler cannot deadlock.
+- **`startCollecting()` / `stopCollecting()` are idempotent.** A duplicate `startCollecting()` previously called `MXMetricManager.add(self)` again and delivered every payload twice — reachable in any app that rebuilds its composition root.
+- **`pastMetricSummaries` / `pastDiagnosticSummaries` are memoized** by reporting interval instead of reprocessing the whole history on every read.
+- Per-payload logging demoted to `.debug`; `.error` reserved for payloads that contain a crash.
+- DocC catalog moved to `Sources/ARCMetrics/ARCMetrics.docc/` so its articles build.
+
+### Fixed
+
+- `MetricSummary` and `DiagnosticSummary` decode tolerantly. Synthesized `Codable` required every key, so summaries archived before `interval` existed would have failed to decode.
+- README no longer advertises a "Battery / Energy" metric this package has never collected.
+
 ## [1.0.0] - 2026-08-20
 
 First public release of **ARCMetrics**.

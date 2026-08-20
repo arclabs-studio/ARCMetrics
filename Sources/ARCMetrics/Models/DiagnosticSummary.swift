@@ -14,6 +14,10 @@ import Foundation
 ///
 /// ## Topics
 ///
+/// ### Reporting Period
+/// - ``interval``
+/// - ``timeRange``
+///
 /// ### Crash Information
 /// - ``crashCount``
 /// - ``crashes``
@@ -30,7 +34,18 @@ import Foundation
 public struct DiagnosticSummary: Sendable, Codable, Equatable, Hashable {
     // MARK: - Properties
 
-    /// Time range covered by this diagnostic summary.
+    /// The period this summary covers, as machine-readable data.
+    ///
+    /// Prefer this over ``timeRange`` for anything other than display: it is
+    /// locale-independent and comparable, which is what a consumer needs to
+    /// deduplicate payloads across launches.
+    ///
+    /// `nil` only for summaries built through ``init(timeRange:)``.
+    public let interval: DateInterval?
+
+    /// Time range covered by this diagnostic summary, formatted for display.
+    ///
+    /// - Important: Locale-dependent. Never parse it — use ``interval``.
     public let timeRange: String
 
     // MARK: Crashes
@@ -84,6 +99,23 @@ public struct DiagnosticSummary: Sendable, Codable, Equatable, Hashable {
 
         /// Information about the virtual memory region involved in the crash.
         public let virtualMemoryRegionInfo: String?
+
+        /// Creates crash detail.
+        ///
+        /// - Parameters:
+        ///   - exceptionType: Exception type, e.g. `EXC_BAD_ACCESS`.
+        ///   - signal: Signal name, e.g. `SIGSEGV`.
+        ///   - terminationReason: System-supplied termination reason.
+        ///   - virtualMemoryRegionInfo: Virtual memory region detail.
+        public init(exceptionType: String?,
+                    signal: String?,
+                    terminationReason: String?,
+                    virtualMemoryRegionInfo: String?) {
+            self.exceptionType = exceptionType
+            self.signal = signal
+            self.terminationReason = terminationReason
+            self.virtualMemoryRegionInfo = virtualMemoryRegionInfo
+        }
     }
 
     /// Detailed information about a hang event.
@@ -95,12 +127,49 @@ public struct DiagnosticSummary: Sendable, Codable, Equatable, Hashable {
         /// - Moderate: 0.5-1.0s (frustrating)
         /// - Severe: >1.0s (unacceptable)
         public let duration: Double
+
+        /// Creates hang detail.
+        ///
+        /// - Parameter duration: Hang duration in seconds.
+        public init(duration: Double) {
+            self.duration = duration
+        }
     }
 
     // MARK: - Initialization
 
+    /// Creates a summary covering `interval`.
+    ///
+    /// - Parameter interval: The period MetricKit aggregated these diagnostics over.
+    public init(interval: DateInterval) {
+        self.interval = interval
+        timeRange = MetricSummary.displayString(for: interval)
+    }
+
+    /// Creates a summary from a pre-formatted display range, leaving
+    /// ``interval`` `nil`.
+    ///
+    /// - Parameter timeRange: Display string for the reporting period.
     public init(timeRange: String) {
+        interval = nil
         self.timeRange = timeRange
+    }
+
+    // MARK: - Decoding
+
+    /// Decodes tolerantly: every field except ``timeRange`` falls back to its
+    /// default when absent, so payloads archived by earlier releases — which had
+    /// no ``interval`` — still decode.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        timeRange = try container.decode(String.self, forKey: .timeRange)
+        interval = try container.decodeIfPresent(DateInterval.self, forKey: .interval)
+        crashCount = try container.decodeIfPresent(Int.self, forKey: .crashCount) ?? 0
+        crashes = try container.decodeIfPresent([CrashInfo].self, forKey: .crashes) ?? []
+        hangCount = try container.decodeIfPresent(Int.self, forKey: .hangCount) ?? 0
+        hangs = try container.decodeIfPresent([HangInfo].self, forKey: .hangs) ?? []
+        diskWriteExceptionCount = try container.decodeIfPresent(Int.self, forKey: .diskWriteExceptionCount) ?? 0
+        cpuExceptionCount = try container.decodeIfPresent(Int.self, forKey: .cpuExceptionCount) ?? 0
     }
 }
 
