@@ -98,10 +98,8 @@ extension MetricsViewModel {
                 self.lastUpdateTime = Date()
 
                 if self.metricSummaries.count == summaries.count {
-                    self.showAlert(
-                        title: "Metrics Received!",
-                        message: "Received your first metric payload with \(summaries.count) summary(ies)"
-                    )
+                    self.showAlert(title: "Metrics Received!",
+                                   message: "Received your first metric payload with \(summaries.count) summary(ies)")
                 }
 
                 for summary in summaries {
@@ -121,10 +119,8 @@ extension MetricsViewModel {
 
                 let totalCrashes = summaries.reduce(0) { $0 + $1.crashCount }
                 if totalCrashes > 0 {
-                    self.showAlert(
-                        title: "Crashes Detected",
-                        message: "Detected \(totalCrashes) crash(es) in the diagnostic payload"
-                    )
+                    self.showAlert(title: "Crashes Detected",
+                                   message: "Detected \(totalCrashes) crash(es) in the diagnostic payload")
                 }
 
                 for summary in summaries {

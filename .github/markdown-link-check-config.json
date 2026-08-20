@@ -5,15 +5,6 @@
     },
     {
       "pattern": "^http://127.0.0.1"
-    },
-    {
-      "pattern": "ARCDevTools/"
-    },
-    {
-      "pattern": "ARCKnowledge/"
-    },
-    {
-      "pattern": "^[a-z]+-[a-z]+$"
     }
   ],
   "replacementPatterns": [

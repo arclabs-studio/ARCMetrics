@@ -30,12 +30,8 @@ final class MetricKitPayloadProcessor {
     /// - Parameter payload: Raw MetricKit payload containing aggregated metrics
     /// - Returns: A simplified `MetricSummary` with key performance indicators
     func processMetricPayload(_ payload: MXMetricPayload) -> MetricSummary {
-        var summary = MetricSummary(
-            timeRange: formatDateRange(
-                start: payload.timeStampBegin,
-                end: payload.timeStampEnd
-            )
-        )
+        var summary = MetricSummary(timeRange: formatDateRange(start: payload.timeStampBegin,
+                                                               end: payload.timeStampEnd))
 
         // Memory metrics
         if let memory = payload.memoryMetrics {
@@ -100,23 +96,17 @@ final class MetricKitPayloadProcessor {
     /// - Parameter payload: Raw MetricKit diagnostic payload
     /// - Returns: A simplified `DiagnosticSummary` with crash and hang information
     func processDiagnosticPayload(_ payload: MXDiagnosticPayload) -> DiagnosticSummary {
-        var summary = DiagnosticSummary(
-            timeRange: formatDateRange(
-                start: payload.timeStampBegin,
-                end: payload.timeStampEnd
-            )
-        )
+        var summary = DiagnosticSummary(timeRange: formatDateRange(start: payload.timeStampBegin,
+                                                                   end: payload.timeStampEnd))
 
         // Crash diagnostics
         if let crashes = payload.crashDiagnostics {
             summary.crashCount = crashes.count
             summary.crashes = crashes.compactMap { crash in
-                DiagnosticSummary.CrashInfo(
-                    exceptionType: crash.exceptionType.map { String(describing: $0) },
-                    signal: crash.signal.map { String(describing: $0) },
-                    terminationReason: crash.terminationReason,
-                    virtualMemoryRegionInfo: crash.virtualMemoryRegionInfo
-                )
+                DiagnosticSummary.CrashInfo(exceptionType: crash.exceptionType.map { String(describing: $0) },
+                                            signal: crash.signal.map { String(describing: $0) },
+                                            terminationReason: crash.terminationReason,
+                                            virtualMemoryRegionInfo: crash.virtualMemoryRegionInfo)
             }
             logger.error("Detected \(crashes.count) crash(es)")
         }
@@ -125,9 +115,7 @@ final class MetricKitPayloadProcessor {
         if let hangs = payload.hangDiagnostics {
             summary.hangCount = hangs.count
             summary.hangs = hangs.compactMap { hang in
-                DiagnosticSummary.HangInfo(
-                    duration: hang.hangDuration.converted(to: .seconds).value
-                )
+                DiagnosticSummary.HangInfo(duration: hang.hangDuration.converted(to: .seconds).value)
             }
             logger.warning("Detected \(hangs.count) hang(s)")
         }

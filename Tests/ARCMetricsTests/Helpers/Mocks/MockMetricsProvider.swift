@@ -98,12 +98,10 @@ final class MockMetricsProvider: MetricsProviding, @unchecked Sendable {
 
 extension MockMetricsProvider {
     /// Creates a sample metric summary for testing.
-    static func sampleMetricSummary(
-        timeRange: String = "Test Range",
-        peakMemory: Double = 150.0,
-        cpuTime: Double = 50.0,
-        foregroundTime: Double = 100.0
-    ) -> MetricSummary {
+    static func sampleMetricSummary(timeRange: String = "Test Range",
+                                    peakMemory: Double = 150.0,
+                                    cpuTime: Double = 50.0,
+                                    foregroundTime: Double = 100.0) -> MetricSummary {
         var summary = MetricSummary(timeRange: timeRange)
         summary.peakMemoryUsageMB = peakMemory
         summary.cumulativeCPUTimeSeconds = cpuTime
@@ -112,11 +110,9 @@ extension MockMetricsProvider {
     }
 
     /// Creates a sample diagnostic summary for testing.
-    static func sampleDiagnosticSummary(
-        timeRange: String = "Test Range",
-        crashCount: Int = 0,
-        hangCount: Int = 0
-    ) -> DiagnosticSummary {
+    static func sampleDiagnosticSummary(timeRange: String = "Test Range",
+                                        crashCount: Int = 0,
+                                        hangCount: Int = 0) -> DiagnosticSummary {
         var summary = DiagnosticSummary(timeRange: timeRange)
         summary.crashCount = crashCount
         summary.hangCount = hangCount
@@ -124,16 +120,12 @@ extension MockMetricsProvider {
     }
 
     /// Creates a sample crash info for testing.
-    static func sampleCrashInfo(
-        exceptionType: String = "EXC_BAD_ACCESS",
-        signal: String = "SIGSEGV"
-    ) -> DiagnosticSummary.CrashInfo {
-        DiagnosticSummary.CrashInfo(
-            exceptionType: exceptionType,
-            signal: signal,
-            terminationReason: "Test termination",
-            virtualMemoryRegionInfo: "0x1000"
-        )
+    static func sampleCrashInfo(exceptionType: String = "EXC_BAD_ACCESS",
+                                signal: String = "SIGSEGV") -> DiagnosticSummary.CrashInfo {
+        DiagnosticSummary.CrashInfo(exceptionType: exceptionType,
+                                    signal: signal,
+                                    terminationReason: "Test termination",
+                                    virtualMemoryRegionInfo: "0x1000")
     }
 
     /// Creates a sample hang info for testing.

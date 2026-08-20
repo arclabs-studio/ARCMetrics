@@ -1,18 +1,28 @@
-# ARCDevTools SwiftLint Configuration
-# Version: 1.0.0
+# ARCDevTools SwiftLint Base Configuration
+# Version: 1.3.0
+#
+# This file ships the studio-wide rule set. It is copied verbatim into every
+# consumer project as `.swiftlint.base.yml` on every `arcdevtools-setup` run,
+# so rule updates flow automatically.
+#
+# Projects should NOT edit this file directly. Their per-project
+# `.swiftlint.yml` references it via `parent_config:` and owns project-shape
+# (the `included:` paths, project-local rule tweaks).
+#
+# See README.md → "Customization" for the full contract.
 
-# Included directories
-included:
-  - Sources
-  - Tests
+# NOTE: no `included:` here on purpose — the project's `.swiftlint.yml`
+# defines paths to lint via its own `included:` block.
 
-# Excluded directories
+# Excluded directories (studio-wide defaults — project can extend)
 excluded:
   - .build
   - DerivedData
   - Pods
   - Carthage
-  - ARCDevTools
+  - ARCDevTools        # submodule, usual location
+  - Tools/ARCDevTools  # submodule, nested location (e.g. FavRes-iOS)
+  - .arc-tools         # downloaded pinned linter binaries
   - "*/Generated/*"
   - "*.generated.swift"
 
