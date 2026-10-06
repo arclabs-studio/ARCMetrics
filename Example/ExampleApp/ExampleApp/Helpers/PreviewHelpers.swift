@@ -20,7 +20,7 @@ enum PreviewData {
                                     launchTime: Double = 0.85,
                                     gpuTime: Double = 12.5,
                                     diskWrites: Double = 45.8,
-                                    scrollHitch: Double = 3.2) -> MetricSummary {
+                                    hitchRate: Double = 3.2) -> MetricSummary {
         var summary = MetricSummary(timeRange: timeRange)
         summary.peakMemoryUsageMB = peakMemory
         summary.averageMemoryUsageMB = avgMemory
@@ -30,7 +30,7 @@ enum PreviewData {
         summary.averageLaunchTimeSeconds = launchTime
         summary.cumulativeGPUTimeSeconds = gpuTime
         summary.cumulativeDiskWritesMB = diskWrites
-        summary.scrollHitchTimeRatio = scrollHitch
+        summary.hitchTimeRatio = hitchRate
         summary.cellularDownloadMB = 25.5
         summary.cellularUploadMB = 5.2
         summary.wifiDownloadMB = 150.8
@@ -51,9 +51,9 @@ enum PreviewData {
     }
 
     static var sampleMetricSummaries: [MetricSummary] {
-        [sampleMetricSummary(timeRange: "Jan 7-8, 2025", peakMemory: 185.5, gpuTime: 12.5, scrollHitch: 3.2),
-         sampleMetricSummary(timeRange: "Jan 6-7, 2025", peakMemory: 165.2, gpuTime: 8.3, scrollHitch: 2.1),
-         sampleMetricSummary(timeRange: "Jan 5-6, 2025", peakMemory: 210.8, gpuTime: 25.7, scrollHitch: 7.5)]
+        [sampleMetricSummary(timeRange: "Jan 7-8, 2025", peakMemory: 185.5, gpuTime: 12.5, hitchRate: 3.2),
+         sampleMetricSummary(timeRange: "Jan 6-7, 2025", peakMemory: 165.2, gpuTime: 8.3, hitchRate: 2.1),
+         sampleMetricSummary(timeRange: "Jan 5-6, 2025", peakMemory: 210.8, gpuTime: 25.7, hitchRate: 7.5)]
     }
 
     static var sampleDiagnosticSummaries: [DiagnosticSummary] {
