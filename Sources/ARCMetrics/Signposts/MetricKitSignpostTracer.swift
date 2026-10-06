@@ -10,7 +10,9 @@ import os.log
 import struct os.OSAllocatedUnfairLock
 import os.signpost
 
-#if os(iOS) || os(visionOS) || os(macOS)
+// macOS needs MetricKit only for the iOS/macOS 27 path. Older macOS SDKs
+// (Xcode 16, as on CI) mark `mxSignpost` unavailable on macOS.
+#if os(iOS) || os(visionOS) || (os(macOS) && compiler(>=6.4))
 import MetricKit
 #endif
 
@@ -165,7 +167,7 @@ extension MetricKitSignpostTracer {
     /// Single emission point, so the MetricKit-vs-`os_signpost` choice lives in
     /// exactly one place.
     private static func signpost(_ type: OSSignpostType, on handle: Handle, name: StaticString, id: OSSignpostID) {
-        #if os(iOS) || os(visionOS) || os(macOS)
+        #if os(iOS) || os(visionOS) || (os(macOS) && compiler(>=6.4))
         if handle.usesMetricKit {
             // Only `mxSignpost` populates SignpostIntervalMetric's CPU / memory /
             // logical-writes measurements. `OSSignposter` on the same handle would
