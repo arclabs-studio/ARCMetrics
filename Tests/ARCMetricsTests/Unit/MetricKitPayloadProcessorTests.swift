@@ -54,11 +54,12 @@ import Testing
 
     // MARK: - Metric Payload
 
-    @Test("An empty payload maps every metric to zero, never to nil") func emptyPayloadMapsToZero() {
+    @Test("An empty payload maps every non-optional metric to zero, never to nil") func emptyPayloadMapsToZero() {
         // Given
         let sut = makeSUT()
 
-        // When
+        // When — hitch ratios are excluded here: they are `Double?` and default
+        // to `nil`, not `0`. See `hitchRatiosDefaultToNilNotZero` below.
         let summary = sut.processMetricPayload(StubMetricPayload())
 
         // Then
@@ -66,7 +67,6 @@ import Testing
         #expect(summary.cumulativeCPUTimeSeconds == 0)
         #expect(summary.totalHangTimeSeconds == 0)
         #expect(summary.averageLaunchTimeSeconds == 0)
-        #expect(summary.scrollHitchTimeRatio == 0)
     }
 
     @Test("Scalar metrics are forwarded verbatim") func forwardsScalarMetrics() {
@@ -101,15 +101,34 @@ import Testing
         #expect(summary.cumulativeDiskWritesMB == 8)
     }
 
-    @Test("Scroll hitch ratio is converted from 0...1 to a percentage") func scalesHitchRatioToPercent() {
+    /// v2 spec change (user-approved, not a test edited to pass): the ×100
+    /// conversion below was a verified bug — real MetricKit reports hitch
+    /// ratios already in "ms per s" (measured on device 2026-10-06), not a
+    /// 0...1 fraction. Both hitch fields now pass through unconverted; this
+    /// replaces the old "converted to a percentage" test.
+    @Test("Hitch ratios pass through unconverted, in ms per second") func hitchRatiosPassThroughUnconverted() {
+        // Given
+        let sut = makeSUT()
+        let payload = StubMetricPayload(scrollHitchTimeRatio: 5.0, hitchTimeRatio: 7.5)
+
+        // When
+        let summary = sut.processMetricPayload(payload)
+
+        // Then
+        #expect(summary.scrollHitchTimeRatio == 5.0)
+        #expect(summary.hitchTimeRatio == 7.5)
+    }
+
+    @Test("A nil hitch ratio from the source decodes as nil, not zero") func hitchRatiosDefaultToNilNotZero() {
         // Given
         let sut = makeSUT()
 
         // When
-        let summary = sut.processMetricPayload(StubMetricPayload(scrollHitchTimeRatio: 0.023))
+        let summary = sut.processMetricPayload(StubMetricPayload())
 
         // Then
-        #expect(abs(summary.scrollHitchTimeRatio - 2.3) < 0.000_001)
+        #expect(summary.scrollHitchTimeRatio == nil)
+        #expect(summary.hitchTimeRatio == nil)
     }
 
     @Test("Average CPU percentage divides CPU time by foreground time") func derivesCPUPercentage() {

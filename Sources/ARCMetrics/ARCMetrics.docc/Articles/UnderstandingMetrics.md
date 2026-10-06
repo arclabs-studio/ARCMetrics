@@ -124,21 +124,29 @@ Disk write activity affects device performance and battery life. Excessive write
 ### Animation Performance
 
 ```swift
-summary.scrollHitchTimeRatio // Scroll hitch time as percentage
+summary.hitchTimeRatio       // All tracked animations, ms per second (Double?)
+summary.scrollHitchTimeRatio // UIScrollView scrolling only, ms per second (Double?)
 ```
 
-A "hitch" occurs when a frame takes longer than expected to render during scrolling, causing visible stuttering. The ratio represents the percentage of scroll time that was affected by hitches.
+A "hitch" is a frame that reaches the screen late, causing visible stuttering. Both ratios are the total hitch time in **milliseconds per second** of animation.
 
-| Value | Assessment | User Experience |
-|-------|------------|-----------------|
-| < 1% | Excellent | Butter-smooth scrolling |
-| 1-5% | Good | Occasional micro-stutters |
-| 5-10% | Fair | Noticeable jank |
-| > 10% | Poor | Frustrating scroll experience |
+``MetricSummary/hitchTimeRatio`` covers all tracked animations and is adjusted by Apple for human perception, which makes it the best single smoothness figure. It is reported on iOS / macOS 27 and on iOS / visionOS 26; it is `nil` on earlier OS versions.
 
-> Warning: Users are highly sensitive to scroll performance. Even small hitch ratios can affect perceived app quality. Target < 5% for a good experience.
+``MetricSummary/scrollHitchTimeRatio`` covers `UIScrollView` scrolling only, and only the `MXMetricManager` path (iOS before 27, visionOS) reports it. It is `nil` on iOS and macOS 27.
 
-Common causes of scroll hitches:
+| Hitch time ratio | Assessment | User Experience |
+|------------------|------------|-----------------|
+| < 5 ms/s | Good | Smooth |
+| 5-10 ms/s | Noticeable | Users notice occasional stutters |
+| > 10 ms/s | Poor | Investigate — frustrating experience |
+
+Targets from Apple's WWDC20 session *Eliminate animation hitches with XCTest*.
+
+> Warning: Users are highly sensitive to scroll performance. Target < 5 ms/s for a good experience.
+
+> Important: ARCMetrics 1.x reported `scrollHitchTimeRatio` as a "percentage" that was really ms per second × 100. Values from 1.x, including any you persisted, are 100 times too large. See <doc:MigratingToV2>.
+
+Common causes of hitches:
 - Complex cell layouts being calculated on scroll
 - Image decoding on the main thread
 - Expensive shadow or corner radius rendering

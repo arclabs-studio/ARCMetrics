@@ -5,9 +5,10 @@
 //  Created by ARC Labs Studio on 2026-08-21.
 //
 
+import ARCMetrics
+import ARCMetricsMocks
 import Foundation
 import Testing
-@testable import ARCMetrics
 
 @Suite("Signpost tracing", .tags(.unit)) struct SignpostTracingTests {
     // MARK: - Scoped Measurement

@@ -14,26 +14,40 @@ import Foundation
 /// literal to close an interval that opened it — the token is what saves every
 /// call site from repeating the name and getting it wrong.
 ///
-/// Opaque by design: nothing outside the package should synthesise one.
+/// Opaque by design: nothing outside the package should synthesise one
+/// (`ARCMetricsMocks` does, through the `package` initialiser).
 public struct SignpostInterval: Sendable {
     // MARK: - Properties
 
     /// The literal the interval opened with.
-    let name: StaticString
+    package let name: StaticString
 
     /// The category whose log handle the interval was emitted on.
-    let category: SignpostCategory
+    package let category: SignpostCategory
 
     /// The underlying `OSSignpostID` value.
     ///
     /// Stored raw so this type stays available on platforms without `os_signpost`.
-    let rawID: UInt64
+    package let rawID: UInt64
 
     /// Whether ``SignpostTracing/end(_:)`` should emit anything.
     ///
     /// `false` when the tracer is disabled, so `end` becomes a cheap no-op
     /// rather than a branch at every call site.
-    let isActive: Bool
+    package let isActive: Bool
+
+    // MARK: - Initialization
+
+    /// Creates a token.
+    ///
+    /// `package` so `ARCMetricsMocks` can mint tokens without making this
+    /// constructor public API.
+    package init(name: StaticString, category: SignpostCategory, rawID: UInt64, isActive: Bool) {
+        self.name = name
+        self.category = category
+        self.rawID = rawID
+        self.isActive = isActive
+    }
 
     /// A token that emits nothing when ended.
     static func inactive(name: StaticString, category: SignpostCategory) -> SignpostInterval {

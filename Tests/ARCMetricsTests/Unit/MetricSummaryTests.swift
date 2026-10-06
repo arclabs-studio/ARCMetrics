@@ -28,7 +28,9 @@ final class MetricSummaryTests: XCTestCase {
         XCTAssertEqual(summary.wifiUploadMB, 0)
         XCTAssertEqual(summary.cumulativeGPUTimeSeconds, 0)
         XCTAssertEqual(summary.cumulativeDiskWritesMB, 0)
-        XCTAssertEqual(summary.scrollHitchTimeRatio, 0)
+        // v2: both hitch ratios are `Double?`, defaulting to `nil`, not `0`.
+        XCTAssertNil(summary.scrollHitchTimeRatio)
+        XCTAssertNil(summary.hitchTimeRatio)
     }
 
     // MARK: - CPU Percentage Tests
@@ -74,11 +76,17 @@ final class MetricSummaryTests: XCTestCase {
         XCTAssertEqual(summary.cumulativeDiskWritesMB, 100.0, accuracy: 0.01)
     }
 
-    func testScrollHitchMetrics() {
+    // v2: both hitch ratios became `Double?`, so `XCTAssertEqual(_:_:accuracy:)`
+    // (which requires a non-optional `FloatingPoint`) needs an explicit unwrap.
+    func testScrollHitchMetrics() throws {
         var summary = MetricSummary(timeRange: "Test")
         summary.scrollHitchTimeRatio = 2.5
+        summary.hitchTimeRatio = 7.5
 
-        XCTAssertEqual(summary.scrollHitchTimeRatio, 2.5, accuracy: 0.01)
+        let scroll = try XCTUnwrap(summary.scrollHitchTimeRatio)
+        XCTAssertEqual(scroll, 2.5, accuracy: 0.01)
+        let hitch = try XCTUnwrap(summary.hitchTimeRatio)
+        XCTAssertEqual(hitch, 7.5, accuracy: 0.01)
     }
 
     // MARK: - Codable Tests
@@ -91,6 +99,7 @@ final class MetricSummaryTests: XCTestCase {
         summary.cumulativeGPUTimeSeconds = 25.0
         summary.cumulativeDiskWritesMB = 50.0
         summary.scrollHitchTimeRatio = 1.5
+        summary.hitchTimeRatio = 6.5
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(summary)
@@ -102,7 +111,10 @@ final class MetricSummaryTests: XCTestCase {
         XCTAssertEqual(decoded.peakMemoryUsageMB, summary.peakMemoryUsageMB, accuracy: 0.01)
         XCTAssertEqual(decoded.cumulativeGPUTimeSeconds, summary.cumulativeGPUTimeSeconds, accuracy: 0.01)
         XCTAssertEqual(decoded.cumulativeDiskWritesMB, summary.cumulativeDiskWritesMB, accuracy: 0.01)
-        XCTAssertEqual(decoded.scrollHitchTimeRatio, summary.scrollHitchTimeRatio, accuracy: 0.01)
+        let decodedScroll = try XCTUnwrap(decoded.scrollHitchTimeRatio)
+        XCTAssertEqual(decodedScroll, try XCTUnwrap(summary.scrollHitchTimeRatio), accuracy: 0.01)
+        let decodedHitch = try XCTUnwrap(decoded.hitchTimeRatio)
+        XCTAssertEqual(decodedHitch, try XCTUnwrap(summary.hitchTimeRatio), accuracy: 0.01)
     }
 
     // MARK: - Equatable Tests
