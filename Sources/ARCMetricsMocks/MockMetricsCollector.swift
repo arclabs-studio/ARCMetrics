@@ -16,7 +16,7 @@ import struct os.OSAllocatedUnfairLock
 ///
 /// ```swift
 /// let collector = MockMetricsCollector()
-/// let sut = MetricsLogger(collector: collector)
+/// let sut = CrashReporter(collector: collector)
 ///
 /// collector.simulate(diagnostic: crashSummary)
 /// ```
@@ -66,6 +66,12 @@ public final class MockMetricsCollector: MetricsCollecting {
     public init(pastMetricSummaries: [MetricSummary] = [], pastDiagnosticSummaries: [DiagnosticSummary] = []) {
         self.pastMetricSummaries = pastMetricSummaries
         self.pastDiagnosticSummaries = pastDiagnosticSummaries
+    }
+
+    /// Finishes every open stream, like the real collector.
+    deinit {
+        metricBroadcaster.finish()
+        diagnosticBroadcaster.finish()
     }
 
     // MARK: - MetricsCollecting
