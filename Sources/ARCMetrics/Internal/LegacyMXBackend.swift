@@ -18,15 +18,13 @@ import struct os.OSAllocatedUnfairLock
 /// deployment targets.
 ///
 /// Checked `Sendable`: every stored property is a constant, and the delivery
-/// target and caches live behind a lock. MetricKit calls the subscriber on a
+/// target and caches live behind locks. MetricKit calls the subscriber on a
 /// background thread of its choosing.
 final class LegacyMXBackend: NSObject, MXMetricManagerSubscriber, MetricsBackend {
     // MARK: - Nested Types
 
     private struct State {
         var delivery: MetricsDelivery?
-        var metricCache: [DateInterval: MetricSummary] = [:]
-        var diagnosticCache: [DateInterval: DiagnosticSummary] = [:]
     }
 
     // MARK: - Properties
@@ -34,6 +32,8 @@ final class LegacyMXBackend: NSObject, MXMetricManagerSubscriber, MetricsBackend
     private let logger: any MetricsLogger
     private let processor: MetricKitPayloadProcessor
     private let state = OSAllocatedUnfairLock(initialState: State())
+    private let metricCache = SummaryCache<MetricSummary>()
+    private let diagnosticCache = SummaryCache<DiagnosticSummary>()
 
     /// MetricKit's on-device history, transformed once per reporting interval.
     var pastMetricSummaries: [MetricSummary] {
@@ -94,13 +94,7 @@ extension LegacyMXBackend {
     /// reporting interval.
     private func cachedMetricSummaries(for payloads: [MXMetricPayload]) -> [MetricSummary] {
         payloads.map { payload in
-            let interval = payload.interval
-            if let cached = state.withLock({ $0.metricCache[interval] }) {
-                return cached
-            }
-            let summary = processor.processMetricPayload(payload)
-            state.withLock { $0.metricCache[interval] = summary }
-            return summary
+            metricCache.summary(for: payload.interval) { processor.processMetricPayload(payload) }
         }
     }
 
@@ -108,13 +102,7 @@ extension LegacyMXBackend {
     /// reporting interval.
     private func cachedDiagnosticSummaries(for payloads: [MXDiagnosticPayload]) -> [DiagnosticSummary] {
         payloads.map { payload in
-            let interval = payload.interval
-            if let cached = state.withLock({ $0.diagnosticCache[interval] }) {
-                return cached
-            }
-            let summary = processor.processDiagnosticPayload(payload)
-            state.withLock { $0.diagnosticCache[interval] = summary }
-            return summary
+            diagnosticCache.summary(for: payload.interval) { processor.processDiagnosticPayload(payload) }
         }
     }
 }
