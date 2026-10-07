@@ -73,7 +73,7 @@ protocol MetricPayloadSource {
 
     /// Hitch time while scrolling, in milliseconds per second.
     ///
-    /// Only the 1.x `MXMetricPayload` reports a scroll-only figure.
+    /// Only the `MXMetricPayload` path reports a scroll-only figure.
     var scrollHitchTimeRatio: Double? { get }
     /// Hitch time across all tracked animations, in milliseconds per second.
     var hitchTimeRatio: Double? { get }

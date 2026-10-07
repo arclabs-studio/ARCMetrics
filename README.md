@@ -204,7 +204,11 @@ ARCMetrics/
 │   │   │   ├── DefaultMetricsBackend.swift   # Runtime backend selection
 │   │   │   ├── MetricManagerBackend.swift    # iOS/macOS 27 MetricManager
 │   │   │   ├── LegacyMXBackend.swift         # MXMetricManager subscriber
-│   │   │   ├── MetricsBackend.swift          # Backend protocol + macOS < 27 no-op
+│   │   │   ├── MetricsBackend.swift          # Backend protocol + delivery target
+│   │   │   ├── UnavailableMetricsBackend.swift  # macOS < 27 no-op
+│   │   │   ├── MetricReportStreams.swift     # Seam over MetricManager's report sequences
+│   │   │   ├── SummaryCache.swift            # Per-interval memo (MXMetricManager backend)
+│   │   │   ├── MetricsLogger.swift           # Logger alias (iOS 27 MetricKit re-exports os)
 │   │   │   ├── SummaryBroadcaster.swift      # AsyncStream fan-out
 │   │   │   ├── PayloadSources.swift          # Platform-free payload protocols (the seam)
 │   │   │   ├── MetricKitPayloadAdapters.swift  # MXPayload conformances (iOS/visionOS)

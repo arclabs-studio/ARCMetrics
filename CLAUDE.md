@@ -48,7 +48,10 @@ Sources/ARCMetrics/
 │   ├── DefaultMetricsBackend.swift  # Picks the backend at runtime
 │   ├── MetricManagerBackend.swift   # iOS/macOS 27: MetricManager report sequences
 │   ├── LegacyMXBackend.swift        # iOS < 27 + visionOS: MXMetricManager subscriber
-│   ├── MetricsBackend.swift         # Backend protocol + UnavailableMetricsBackend (macOS < 27)
+│   ├── MetricsBackend.swift         # Backend protocol + MetricsDelivery
+│   ├── UnavailableMetricsBackend.swift  # macOS < 27: logs a warning, delivers nothing
+│   ├── MetricReportStreams.swift    # Seam over MetricManager's report sequences (fixtures in tests)
+│   ├── SummaryCache.swift           # Per-interval memo for the MXMetricManager backend
 │   ├── SummaryBroadcaster.swift     # `package` AsyncStream fan-out (shared with the mocks)
 │   ├── MetricsLogger.swift          # `Logger` alias: iOS 27's MetricKit re-exports `os`
 │   ├── PayloadSources.swift         # Platform-free payload protocols (the test seam)
@@ -87,6 +90,8 @@ Task {
 ```
 
 **Concurrency:** everything is checked `Sendable` (`OSAllocatedUnfairLock` for mutable state). Never add `@unchecked Sendable`.
+
+**Stream lifetime:** streams finish when the collector is released (`deinit` finishes both broadcasters). Without that, `for await` loops over a released collector would suspend forever.
 
 ## Example App
 
@@ -186,10 +191,10 @@ The Xcode apps and packages follow MVVM+C architecture with SwiftUI, Clean Code,
 
 ## Key Architectural Patterns
 
-1. **Feature-based organization**: Each feature (Home, Scanner, Details, Generator, etc.) has its own folder.
-2. **Dependency injection**: Using `@EnvironmentObject` for shared state (e.g., `NetworkingManager`).
-3. **Reactive updates**: Combine framework with `@Published` properties.
-4. **Data persistence**: Swift Data for local storage, CloudKit for cloud sync.
+1. **Protocol seams**: consumers depend on `MetricsCollecting` / `SignpostTracing`; tests use `ARCMetricsMocks`.
+2. **One MetricKit reader per collector**: a single `MetricManager` (or `MXMetricManager` subscription), multicast through `SummaryBroadcaster`.
+3. **Runtime backend selection**: `makeDefaultBackend` picks the API generation; tests inject a fake `MetricsBackend` or `MetricReportStreams`.
+4. **Checked `Sendable`**: mutable state behind `OSAllocatedUnfairLock`, never `@unchecked Sendable`.
 
 ---
 
@@ -199,7 +204,8 @@ Tests are in `Tests/ARCMetricsTests/`. New tests use Swift Testing (`@Suite`, `@
 
 - Use Swift Testing (not XCTest)
 - Add Suite and Tests explicit descriptions
-- Test `MetricsCollector` through the internal `init(logger:backend:)` seam with a fake backend; payload processing through `MetricPayloadSource` / `DiagnosticPayloadSource` stubs
+- Test `MetricsCollector` through the internal `init(logger:backend:)` seam with a fake backend; `MetricManagerBackend` through `MetricReportStreams` with decoded report fixtures (`FakeReportStreams`); payload processing through `MetricPayloadSource` / `DiagnosticPayloadSource` stubs
+- Bound every wait on a stream: suites that iterate `AsyncStream`s carry `.timeLimit(.minutes(1))`
 - Test ViewModels and UseCases independently
 - Focus on business logic over UI
 
