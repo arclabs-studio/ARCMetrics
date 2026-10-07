@@ -28,9 +28,11 @@ func collectFirst<S: AsyncSequence>(_ sequence: S, count: Int) async rethrows ->
 /// duration.
 ///
 /// Used only where production exposes no event to synchronize on directly
-/// (e.g. a subscriber count dropping after cancellation). Bounded at ~20ms of
-/// total sleeping so a genuine regression fails fast instead of hanging.
-func waitUntil(attempts: Int = 20, _ condition: @Sendable () -> Bool) async {
+/// (e.g. a subscriber count dropping after cancellation). Bounded at ~1s of
+/// total sleeping: generous enough for a loaded test run, short enough that a
+/// genuine regression fails instead of hanging. Callers still assert the
+/// condition afterwards; this only waits.
+func waitUntil(attempts: Int = 1000, _ condition: @Sendable () -> Bool) async {
     for _ in 0 ..< attempts {
         if condition() {
             return

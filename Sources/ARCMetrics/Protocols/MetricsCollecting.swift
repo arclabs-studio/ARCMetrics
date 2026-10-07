@@ -17,7 +17,9 @@ import Foundation
 /// Summaries arrive as `AsyncStream`s. Every call to ``metricSummaries()`` or
 /// ``diagnosticSummaries()`` creates a new, independent subscriber that
 /// receives every summary delivered from then on, so several consumers (a
-/// logger, an exporter) never steal summaries from each other.
+/// logger, an exporter) never steal summaries from each other. Streams finish
+/// when the collector is released, so keep the collector for as long as you
+/// read from it.
 ///
 /// ```swift
 /// let collector: any MetricsCollecting = MetricsCollector()

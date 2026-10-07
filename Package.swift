@@ -7,8 +7,8 @@ let package = Package(name: "ARCMetrics",
 
                       // MARK: - Platforms
 
-                      // Note: MetricKit is only available on iOS and visionOS.
-                      // macOS is included for development tooling compatibility only.
+                      // MetricKit backends: MetricManager on iOS / macOS 27, MXMetricManager on
+                      // earlier iOS and visionOS. macOS before 27 builds but delivers nothing.
                       platforms: [.iOS(.v17),
                                   .macOS(.v14),
                                   .visionOS(.v1)],

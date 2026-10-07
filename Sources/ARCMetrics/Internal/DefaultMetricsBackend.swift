@@ -5,7 +5,9 @@
 //  Created by ARC Labs Studio on 2026-10-06.
 //
 
-import Foundation
+#if compiler(>=6.4) && (os(iOS) || os(macOS))
+import MetricKit
+#endif
 
 extension MetricsCollector {
     /// Picks the newest MetricKit API this device offers.
@@ -19,7 +21,7 @@ extension MetricsCollector {
     static func makeDefaultBackend(logger: any MetricsLogger) -> any MetricsBackend {
         #if compiler(>=6.4) && (os(iOS) || os(macOS))
         if #available(iOS 27, macOS 27, *) {
-            return MetricManagerBackend(logger: logger)
+            return MetricManagerBackend(source: MetricManager(), logger: logger)
         }
         #endif
 

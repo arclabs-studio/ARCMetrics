@@ -16,6 +16,7 @@ ARCMetrics 2.0 moves to Apple's iOS / macOS 27 `MetricManager` API and replaces 
 - **No singleton.** The app creates one `MetricsCollector` and keeps it for its lifetime. Apple recommends a single `MetricManager`; two iterators of the same report sequence each receive a non-deterministic subset of reports.
 - **`MetricSummary.scrollHitchTimeRatio` is now `Double?` in milliseconds per second** (was `Double = 0`, documented as a percentage). It is `nil` on iOS and macOS 27, where `MetricManager` has no scroll-only metric — read `hitchTimeRatio` there.
 - **`MockMetricsProvider` is gone.** The test double now ships as `MockMetricsCollector` in the new `ARCMetricsMocks` product.
+- **Streams finish when their collector is released.** Keep the `MetricsCollector` (or `MockMetricsCollector`) alive for as long as you read from it; a `for await` loop over a released collector now ends instead of suspending forever.
 
 ### Added
 
@@ -41,6 +42,7 @@ ARCMetrics 2.0 moves to Apple's iOS / macOS 27 `MetricManager` API and replaces 
 
 - **`scrollHitchTimeRatio` was 100× too large.** 1.x multiplied MetricKit's value by 100, assuming a `0...1` ratio. MetricKit reports milliseconds per second (unit symbol measured on an iOS 27 device, 2026-10-06). 2.0 stores the value as reported. Summaries persisted by 1.x decode unchanged and are therefore still 100× too large.
 - **1.x did not compile against the iOS 27 SDK.** From that SDK `import MetricKit` re-exports `os`, which made `Logger` ambiguous with ARCLogger's.
+- **`hitchTimeRatio` on iOS / macOS 27 is converted to `HitchTimeRatio`'s base unit** (ms per second, per Apple's documentation) instead of trusting the encoded unit.
 
 ## [1.0.0] - 2026-08-21
 

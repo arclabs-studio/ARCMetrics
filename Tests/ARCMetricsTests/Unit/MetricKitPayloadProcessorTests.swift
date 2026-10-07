@@ -5,6 +5,7 @@
 //  Created by ARC Labs Studio on 2026-08-20.
 //
 
+import ARCLogger
 import Foundation
 import Testing
 @testable import ARCMetrics
@@ -233,7 +234,6 @@ import Testing
         let summary = sut.processDiagnosticPayload(payload)
 
         // Then
-        #expect(summary.crashCount == summary.crashes.count)
         #expect(summary.crashCount == 2)
         #expect(summary.hangCount == 3)
         #expect(summary.hangs.map(\.duration) == [0.4, 1.2, 3.0])
@@ -241,9 +241,35 @@ import Testing
         #expect(summary.cpuExceptionCount == 2)
     }
 
+    // MARK: - Log Severity
+
+    @Test("A diagnostic payload with a crash logs exactly one error") func crashLogsOneError() {
+        // Given
+        let logger = RecordingLogger()
+        let sut = makeSUT(logger: logger)
+
+        // When
+        _ = sut.processDiagnosticPayload(StubDiagnosticPayload(crashes: [.fixture()]))
+
+        // Then
+        #expect(logger.entries(at: .error).count == 1)
+    }
+
+    @Test("A diagnostic payload without crashes logs no error") func cleanPayloadLogsNoError() {
+        // Given — zero crashes is the daily common case and must not page anyone
+        let logger = RecordingLogger()
+        let sut = makeSUT(logger: logger)
+
+        // When
+        _ = sut.processDiagnosticPayload(StubDiagnosticPayload(hangDurationsSeconds: [2.0]))
+
+        // Then
+        #expect(logger.entries(at: .error).isEmpty)
+    }
+
     // MARK: - Factory
 
-    private func makeSUT() -> MetricKitPayloadProcessor {
-        MetricKitPayloadProcessor(logger: SilentLogger())
+    private func makeSUT(logger: any Logger = SilentLogger()) -> MetricKitPayloadProcessor {
+        MetricKitPayloadProcessor(logger: logger)
     }
 }

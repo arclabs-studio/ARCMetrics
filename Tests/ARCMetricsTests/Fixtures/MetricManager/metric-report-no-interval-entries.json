@@ -1,0 +1,26 @@
+{
+  "environment": {
+    "applicationBuildVersion": "1.0",
+    "bundleIdentifier": "com.arclabsstudio.arcmetrics.example",
+    "deviceType": "iPhone17,3",
+    "hasExceededStateLimit": false,
+    "includesMultipleApplicationVersions": false,
+    "isTestFlightApp": false,
+    "latestApplicationVersion": "1.0.0",
+    "lowPowerModeEnabled": false,
+    "osVersion": {
+      "buildNumber": "24A437",
+      "number": "27.0",
+      "platform": "iPhone OS"
+    },
+    "platformArchitecture": "arm64e",
+    "regionFormat": "ES"
+  },
+  "intervalEntries": [],
+  "stateEntries": [],
+  "timeRange": {
+    "begin": 812844000,
+    "end": 812930340
+  },
+  "version": "2.0.0"
+}

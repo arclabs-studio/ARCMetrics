@@ -14,7 +14,7 @@ import Testing
 /// `ARCMetrics` get from `ARCMetricsMocks` — this suite is written against
 /// `MetricsCollecting`, the same protocol a consumer's own code would depend
 /// on, never against mock-only internals.
-@Suite("MockMetricsCollector", .tags(.unit)) struct MockMetricsCollectorTests {
+@Suite("MockMetricsCollector", .tags(.unit), .timeLimit(.minutes(1))) struct MockMetricsCollectorTests {
     // MARK: - Simulation Reaches Every Subscriber
 
     @Test("A simulated metric reaches two concurrent subscribers") func simulateMetricReachesTwoSubscribers() async {
@@ -67,5 +67,33 @@ import Testing
         // Then
         #expect(sut.startCollectingCallCount == 2)
         #expect(sut.stopCollectingCallCount == 1)
+    }
+
+    @Test("isCollecting follows the last start or stop call") func isCollectingFollowsCalls() {
+        // Given
+        let sut = MockMetricsCollector()
+
+        // When / Then
+        sut.startCollecting()
+        #expect(sut.isCollecting)
+        sut.stopCollecting()
+        #expect(!sut.isCollecting)
+    }
+
+    // MARK: - Stream Lifetime
+
+    @Test("Releasing the mock finishes every open stream, like the real collector")
+    func releaseFinishesStreams() async throws {
+        // Given
+        var sut: MockMetricsCollector? = MockMetricsCollector()
+        let metrics = try #require(sut).metricSummaries()
+        let diagnostics = try #require(sut).diagnosticSummaries()
+
+        // When
+        sut = nil
+
+        // Then
+        #expect(await collectFirst(metrics, count: 1).isEmpty)
+        #expect(await collectFirst(diagnostics, count: 1).isEmpty)
     }
 }

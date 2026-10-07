@@ -17,12 +17,12 @@ import Testing
 /// diagnostic event. The oracle for every assertion is hand-read off the
 /// fixture JSON (crash signal/exception numbers, hang duration in ms),
 /// independent of `diagnosticSource` and of `MetricKitPayloadProcessor`.
-@Suite("DiagnosticReport adapter", .tags(.unit, .integration)) struct DiagnosticReportAdapterTests {
+@Suite("DiagnosticReport adapter", .tags(.integration)) struct DiagnosticReportAdapterTests {
     @available(iOS 27, macOS 27, *)
     @Test("A crash diagnostic report maps to exactly one crash with the fixture's fields")
     func mapsCrashDiagnostic() throws {
         // Given
-        let report = try loadReport(fixture: "diagnostic-crashDiagnostic-simulated")
+        let report = try ReportFixtures.diagnosticReport("diagnostic-crashDiagnostic-simulated")
         let source = try #require(report.diagnosticSource)
 
         // When
@@ -41,7 +41,7 @@ import Testing
     @Test("A hang diagnostic report maps to exactly one hang of the fixture's duration")
     func mapsHangDiagnostic() throws {
         // Given
-        let report = try loadReport(fixture: "diagnostic-hangDiagnostic-simulated")
+        let report = try ReportFixtures.diagnosticReport("diagnostic-hangDiagnostic-simulated")
         let source = try #require(report.diagnosticSource)
 
         // When
@@ -56,7 +56,7 @@ import Testing
     @Test("A CPU exception diagnostic report counts as exactly one CPU exception")
     func mapsCPUExceptionDiagnostic() throws {
         // Given
-        let report = try loadReport(fixture: "diagnostic-cpuExceptionDiagnostic-simulated")
+        let report = try ReportFixtures.diagnosticReport("diagnostic-cpuExceptionDiagnostic-simulated")
         let source = try #require(report.diagnosticSource)
 
         // When
@@ -72,7 +72,7 @@ import Testing
     @Test("A disk write exception diagnostic report counts as exactly one disk write exception")
     func mapsDiskWriteExceptionDiagnostic() throws {
         // Given
-        let report = try loadReport(fixture: "diagnostic-diskWriteExceptionDiagnostic-simulated")
+        let report = try ReportFixtures.diagnosticReport("diagnostic-diskWriteExceptionDiagnostic-simulated")
         let source = try #require(report.diagnosticSource)
 
         // When
@@ -87,19 +87,10 @@ import Testing
     @available(iOS 27, macOS 27, *)
     @Test("An app launch diagnostic report has no mapped source") func appLaunchDiagnosticHasNoSource() throws {
         // Given / When
-        let report = try loadReport(fixture: "diagnostic-appLaunchDiagnostic-simulated")
+        let report = try ReportFixtures.diagnosticReport("diagnostic-appLaunchDiagnostic-simulated")
 
         // Then — not every diagnostic type this package tracks; no summary to emit
         #expect(report.diagnosticSource == nil)
-    }
-
-    // MARK: - Factory
-
-    @available(iOS 27, macOS 27, *) private func loadReport(fixture name: String) throws -> DiagnosticReport {
-        let url = try #require(Bundle.module.url(forResource: name,
-                                                 withExtension: "json",
-                                                 subdirectory: "Fixtures/MetricManager"))
-        return try JSONDecoder().decode(DiagnosticReport.self, from: Data(contentsOf: url))
     }
 
     // MARK: - Fixture Constants

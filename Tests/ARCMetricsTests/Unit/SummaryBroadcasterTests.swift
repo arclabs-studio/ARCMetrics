@@ -14,7 +14,7 @@ import Testing
 /// an independent subscriber, which is exactly what v1's single-slot
 /// `onMetric` callback could not do (a second consumer silently stole the
 /// first one's only delivery channel).
-@Suite("SummaryBroadcaster", .tags(.unit)) struct SummaryBroadcasterTests {
+@Suite("SummaryBroadcaster", .tags(.unit), .timeLimit(.minutes(1))) struct SummaryBroadcasterTests {
     // MARK: - Fan-out
 
     @Test("Every current subscriber receives every yielded element, in order") func fanOutPreservesOrder() async {

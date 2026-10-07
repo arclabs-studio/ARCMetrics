@@ -25,7 +25,10 @@ import struct os.OSAllocatedUnfairLock
 ///
 /// The readers hold the backend weakly; they end at the first report after
 /// the backend is released.
-@available(iOS 27, macOS 27, *) final class MetricManagerBackend: MetricsBackend {
+///
+/// Generic over its report source so tests can drive it with fixtures; the
+/// default backend passes a `MetricManager`.
+@available(iOS 27, macOS 27, *) final class MetricManagerBackend<Source: MetricReportStreams>: MetricsBackend {
     // MARK: - Nested Types
 
     private struct State {
@@ -37,7 +40,7 @@ import struct os.OSAllocatedUnfairLock
 
     // MARK: - Properties
 
-    private let manager = MetricManager()
+    private let source: Source
     private let logger: any MetricsLogger
     private let processor: MetricKitPayloadProcessor
     private let state = OSAllocatedUnfairLock(initialState: State())
@@ -55,7 +58,8 @@ import struct os.OSAllocatedUnfairLock
 
     // MARK: - Initialization
 
-    init(logger: any MetricsLogger) {
+    init(source: Source, logger: any MetricsLogger) {
+        self.source = source
         self.logger = logger
         processor = MetricKitPayloadProcessor(logger: logger)
     }
@@ -82,9 +86,9 @@ import struct os.OSAllocatedUnfairLock
 @available(iOS 27, macOS 27, *) extension MetricManagerBackend {
     /// Starts the two lifetime readers. Called exactly once.
     private func startReaders() {
-        let manager = manager
+        let source = source
         Task { [weak self] in
-            for await report in manager.metricReports {
+            for await report in source.metricReports {
                 guard let self else { return }
                 let summary = processor.processMetricPayload(report)
                 let delivery = state.withLock { state -> MetricsDelivery? in
@@ -96,13 +100,13 @@ import struct os.OSAllocatedUnfairLock
             }
         }
         Task { [weak self] in
-            for await report in manager.diagnosticReports {
+            for await report in source.diagnosticReports {
                 guard let self else { return }
-                guard let source = report.diagnosticSource else {
+                guard let diagnosticSource = report.diagnosticSource else {
                     logger.debug("Skipping a diagnostic report this package does not summarise")
                     continue
                 }
-                let summary = processor.processDiagnosticPayload(source)
+                let summary = processor.processDiagnosticPayload(diagnosticSource)
                 let delivery = state.withLock { state -> MetricsDelivery? in
                     state.diagnosticSummaries.append(summary)
                     return state.delivery

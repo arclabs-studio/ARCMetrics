@@ -17,7 +17,7 @@ import Testing
 /// The motivating case is in `metricSummariesReachTwoConcurrentSubscribers`:
 /// v1's `MetricKitProvider` held a single `onMetric` callback, so a second
 /// consumer registering silently replaced the first one's delivery channel.
-@Suite("MetricsCollector", .tags(.unit)) struct MetricsCollectorTests {
+@Suite("MetricsCollector", .tags(.unit), .timeLimit(.minutes(1))) struct MetricsCollectorTests {
     // MARK: - Start/Stop Idempotency
 
     @Test("startCollecting forwards to the backend exactly once, even when called twice")
@@ -49,6 +49,22 @@ import Testing
         // Then
         #expect(backend.stopCallCount == 1)
         #expect(!sut.isCollecting)
+    }
+
+    @Test("Starting again after a stop restarts the backend") func startAfterStopRestartsBackend() {
+        // Given
+        let backend = FakeMetricsBackend()
+        let sut = makeSUT(backend: backend)
+        sut.startCollecting()
+        sut.stopCollecting()
+
+        // When
+        sut.startCollecting()
+
+        // Then
+        #expect(backend.startCallCount == 2)
+        #expect(backend.stopCallCount == 1)
+        #expect(sut.isCollecting)
     }
 
     // MARK: - Multicast
@@ -92,6 +108,22 @@ import Testing
         async let secondReceived = collectFirst(second, count: 1)
         #expect(await firstReceived == [summary])
         #expect(await secondReceived == [summary])
+    }
+
+    // MARK: - Stream Lifetime
+
+    @Test("Releasing the collector finishes every open stream") func releaseFinishesStreams() async throws {
+        // Given
+        var sut: MetricsCollector? = makeSUT(backend: FakeMetricsBackend())
+        let metrics = try #require(sut).metricSummaries()
+        let diagnostics = try #require(sut).diagnosticSummaries()
+
+        // When
+        sut = nil
+
+        // Then — both loops end instead of suspending forever
+        #expect(await collectFirst(metrics, count: 1).isEmpty)
+        #expect(await collectFirst(diagnostics, count: 1).isEmpty)
     }
 
     // MARK: - Historical Data

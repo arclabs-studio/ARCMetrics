@@ -23,12 +23,12 @@ import Testing
 /// transfer come from `MXMetricResult` cases that do not exist on macOS; how
 /// the macOS decoder handles their absence is undocumented, so those fields
 /// are asserted only under `#if os(iOS)`.
-@Suite("MetricReport adapter", .tags(.unit, .integration)) struct MetricReportAdapterTests {
+@Suite("MetricReport adapter", .tags(.integration)) struct MetricReportAdapterTests {
     @available(iOS 27, macOS 27, *)
     @Test("A real MetricReport maps to the metric summary hand-computed from its fixture")
     func mapsFixtureToSummary() throws {
         // Given
-        let report = try loadReport(fixture: "metric-report-simulated")
+        let report = try ReportFixtures.metricReport("metric-report-simulated")
 
         // When
         let summary = MetricKitPayloadProcessor(logger: SilentLogger()).processMetricPayload(report)
@@ -66,7 +66,7 @@ import Testing
         // fixture. If this test fails to *decode* (rather than failing the
         // assertion below), the guessed shape is wrong — fix the fixture,
         // never loosen the decode to paper over it.
-        let report = try loadReport(fixture: "metric-report-with-hitch")
+        let report = try ReportFixtures.metricReport("metric-report-with-hitch")
 
         // When
         let summary = MetricKitPayloadProcessor(logger: SilentLogger()).processMetricPayload(report)
@@ -75,13 +75,24 @@ import Testing
         #expect(summary.hitchTimeRatio == 7.5)
     }
 
-    // MARK: - Factory
+    @available(iOS 27, macOS 27, *)
+    @Test("A report with no interval entries maps every metric to zero and its range to the report's")
+    func emptyIntervalEntriesMapToZero() throws {
+        // Given — `metric-report-no-interval-entries.json` is the simulated
+        // capture with `intervalEntries` emptied. `fullDayEntry` is not
+        // documented for an empty collection, so the adapter guards it.
+        let report = try ReportFixtures.metricReport("metric-report-no-interval-entries")
 
-    @available(iOS 27, macOS 27, *) private func loadReport(fixture name: String) throws -> MetricReport {
-        let url = try #require(Bundle.module.url(forResource: name,
-                                                 withExtension: "json",
-                                                 subdirectory: "Fixtures/MetricManager"))
-        return try JSONDecoder().decode(MetricReport.self, from: Data(contentsOf: url))
+        // When
+        let summary = MetricKitPayloadProcessor(logger: SilentLogger()).processMetricPayload(report)
+
+        // Then
+        #expect(summary.cumulativeCPUTimeSeconds == 0)
+        #expect(summary.wifiDownloadMB == 0)
+        #expect(summary.totalHangTimeSeconds == 0)
+        #expect(summary.hitchTimeRatio == nil)
+        #expect(summary.interval == DateInterval(start: Date(timeIntervalSinceReferenceDate: 812_844_000),
+                                                 end: Date(timeIntervalSinceReferenceDate: 812_930_340)))
     }
 }
 #endif

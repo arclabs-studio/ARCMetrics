@@ -99,6 +99,13 @@ public final class MetricsCollector: MetricsCollecting {
         self.backend = backend
     }
 
+    /// Finishes every open stream, so `for await` loops over a released
+    /// collector end instead of suspending forever.
+    deinit {
+        metricBroadcaster.finish()
+        diagnosticBroadcaster.finish()
+    }
+
     // MARK: - MetricsCollecting
 
     public func metricSummaries() -> AsyncStream<MetricSummary> {
