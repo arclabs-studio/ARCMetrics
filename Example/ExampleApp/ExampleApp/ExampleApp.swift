@@ -17,10 +17,7 @@ struct ExampleApp: App {
     // MARK: - Initialization
 
     init() {
-        MetricKitProvider.shared.startCollecting()
-
         print("ARCMetrics ExampleApp Started")
-        print("MetricKit collection initialized")
         print("Metrics will be delivered every ~24 hours")
     }
 
@@ -30,6 +27,7 @@ struct ExampleApp: App {
         WindowGroup {
             ContentView()
                 .environment(metricsViewModel)
+                .task { await metricsViewModel.observeMetrics() }
         }
     }
 }

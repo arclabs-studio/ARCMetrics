@@ -47,6 +47,7 @@ import Foundation
 /// - ``cumulativeDiskWritesMB``
 ///
 /// ### Animation
+/// - ``hitchTimeRatio``
 /// - ``scrollHitchTimeRatio``
 public struct MetricSummary: Sendable, Codable, Equatable, Hashable {
     // MARK: - Properties
@@ -181,13 +182,30 @@ public struct MetricSummary: Sendable, Codable, Equatable, Hashable {
 
     // MARK: Animation
 
-    /// Scroll hitch time ratio as a percentage.
+    /// Hitch time across all tracked animations, in milliseconds per second.
     ///
-    /// A hitch occurs when a frame takes longer than expected to render during scrolling.
-    /// Lower values indicate smoother scrolling performance.
+    /// A hitch is a frame that reaches the screen late. Apple normalises the
+    /// total hitch time against the total animation time and adjusts it for
+    /// human perception, which makes this the best single smoothness figure.
     ///
-    /// **Target:** < 5%
-    public var scrollHitchTimeRatio: Double = 0
+    /// **Targets (Apple):** under 5 ms/s is good; 5–10 ms/s is noticeable;
+    /// above 10 ms/s needs investigation.
+    ///
+    /// `nil` when the report carries no hitch data, which includes every
+    /// `MXMetricPayload` before iOS 26.
+    public var hitchTimeRatio: Double?
+
+    /// Hitch time while scrolling (`UIScrollView` only), in milliseconds per
+    /// second.
+    ///
+    /// Reported only by the `MXMetricManager` path (iOS before 27, visionOS).
+    /// `MetricManager` has no scroll-only metric, so this is `nil` on iOS and
+    /// macOS 27; use ``hitchTimeRatio`` there.
+    ///
+    /// - Important: Before 2.0 this held `ratio × 100` under the assumption
+    ///   that MetricKit reported `0...1`. MetricKit actually reports ms per
+    ///   second, so 1.x values are 100 times too large.
+    public var scrollHitchTimeRatio: Double?
 
     // MARK: - Initialization
 
@@ -230,7 +248,8 @@ public struct MetricSummary: Sendable, Codable, Equatable, Hashable {
         wifiUploadMB = try container.decodeIfPresent(Double.self, forKey: .wifiUploadMB) ?? 0
         cumulativeGPUTimeSeconds = try container.decodeIfPresent(Double.self, forKey: .cumulativeGPUTimeSeconds) ?? 0
         cumulativeDiskWritesMB = try container.decodeIfPresent(Double.self, forKey: .cumulativeDiskWritesMB) ?? 0
-        scrollHitchTimeRatio = try container.decodeIfPresent(Double.self, forKey: .scrollHitchTimeRatio) ?? 0
+        scrollHitchTimeRatio = try container.decodeIfPresent(Double.self, forKey: .scrollHitchTimeRatio)
+        hitchTimeRatio = try container.decodeIfPresent(Double.self, forKey: .hitchTimeRatio)
     }
 }
 

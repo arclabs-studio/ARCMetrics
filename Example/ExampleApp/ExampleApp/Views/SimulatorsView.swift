@@ -188,12 +188,14 @@ extension SimulatorsView {
 
         let start = Date()
 
-        DispatchQueue.main.async {
-            Thread.sleep(forTimeInterval: 1.0)
+        // Deferred one turn so the status above renders before the hang.
+        Task { @MainActor in
+            await Task.yield()
+            Self.blockCurrentThread(seconds: 1.0)
 
             let duration = Date().timeIntervalSince(start)
-            self.simulationStatus = "Main thread hang completed (\(String(format: "%.1f", duration))s)"
-            self.isSimulating = false
+            simulationStatus = "Main thread hang completed (\(String(format: "%.1f", duration))s)"
+            isSimulating = false
         }
     }
 
@@ -205,7 +207,7 @@ extension SimulatorsView {
             let start = Date()
 
             for taskIndex in 0 ..< 50 {
-                await Task.detached {
+                _ = await Task.detached {
                     var sum = 0
                     for iteration in 0 ..< 100_000 {
                         sum += iteration
@@ -359,7 +361,9 @@ extension SimulatorsView {
 
         let start = Date()
 
-        DispatchQueue.main.async {
+        // Deferred one turn so the status above renders before the hitches.
+        Task { @MainActor in
+            await Task.yield()
             for frameIndex in 0 ..< 20 {
                 var result: Double = 0
                 for iteration in 0 ..< 500_000 {
@@ -367,15 +371,22 @@ extension SimulatorsView {
                 }
                 _ = result
 
-                Thread.sleep(forTimeInterval: 0.05)
-                self.simulationStatus = "Simulating frame \(frameIndex + 1)/20..."
+                Self.blockCurrentThread(seconds: 0.05)
+                simulationStatus = "Simulating frame \(frameIndex + 1)/20..."
             }
 
             let duration = Date().timeIntervalSince(start)
             let durationStr = String(format: "%.1f", duration)
-            self.simulationStatus = "Scroll hitch simulation completed in \(durationStr)s"
-            self.isSimulating = false
+            simulationStatus = "Scroll hitch simulation completed in \(durationStr)s"
+            isSimulating = false
         }
+    }
+
+    /// Blocks the calling thread, on purpose: these simulators exist to make
+    /// MetricKit record hangs and hitches. Synchronous, because `Thread.sleep`
+    /// is unavailable from asynchronous contexts.
+    private static func blockCurrentThread(seconds: TimeInterval) {
+        Thread.sleep(forTimeInterval: seconds)
     }
 }
 

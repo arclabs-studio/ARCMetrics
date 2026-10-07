@@ -13,6 +13,8 @@ import SwiftUI
 final class MetricsViewModel {
     // MARK: - Properties
 
+    private let collector: any MetricsCollecting
+
     var metricSummaries: [MetricSummary] = []
     var diagnosticSummaries: [DiagnosticSummary] = []
     var isCollecting = true
@@ -40,18 +42,29 @@ final class MetricsViewModel {
 
     // MARK: - Initialization
 
-    init() {
-        setupMetricKitCallbacks()
+    /// - Parameter collector: The app's single collector. Create one and keep
+    ///   it: ARCMetrics reads MetricKit once and multicasts from there.
+    init(collector: any MetricsCollecting = MetricsCollector()) {
+        self.collector = collector
     }
 
     // MARK: - Actions
 
+    /// Starts collection and consumes both summary streams until the calling
+    /// task is cancelled. Call it from the root view's `.task`.
+    func observeMetrics() async {
+        collector.startCollecting()
+        async let metrics: Void = receiveMetricSummaries()
+        async let diagnostics: Void = receiveDiagnosticSummaries()
+        _ = await (metrics, diagnostics)
+    }
+
     func toggleCollection() {
         if isCollecting {
-            MetricKitProvider.shared.stopCollecting()
+            collector.stopCollecting()
             print("MetricKit collection stopped")
         } else {
-            MetricKitProvider.shared.startCollecting()
+            collector.startCollecting()
             print("MetricKit collection started")
         }
         isCollecting.toggle()
@@ -87,46 +100,34 @@ final class MetricsViewModel {
 // MARK: - Private Functions
 
 extension MetricsViewModel {
-    private func setupMetricKitCallbacks() {
-        MetricKitProvider.shared.onMetricPayloadsReceived = { [weak self] summaries in
-            Task { @MainActor in
-                guard let self else { return }
+    private func receiveMetricSummaries() async {
+        for await summary in collector.metricSummaries() {
+            print("Received a metric summary")
 
-                print("Received \(summaries.count) metric payload(s)")
+            metricSummaries.append(summary)
+            lastUpdateTime = Date()
 
-                self.metricSummaries.append(contentsOf: summaries)
-                self.lastUpdateTime = Date()
-
-                if self.metricSummaries.count == summaries.count {
-                    self.showAlert(title: "Metrics Received!",
-                                   message: "Received your first metric payload with \(summaries.count) summary(ies)")
-                }
-
-                for summary in summaries {
-                    self.logMetricSummary(summary)
-                }
+            if metricSummaries.count == 1 {
+                showAlert(title: "Metrics Received!", message: "Received your first metric summary")
             }
+
+            logMetricSummary(summary)
         }
+    }
 
-        MetricKitProvider.shared.onDiagnosticPayloadsReceived = { [weak self] summaries in
-            Task { @MainActor in
-                guard let self else { return }
+    private func receiveDiagnosticSummaries() async {
+        for await summary in collector.diagnosticSummaries() {
+            print("Received a diagnostic summary")
 
-                print("Received \(summaries.count) diagnostic payload(s)")
+            diagnosticSummaries.append(summary)
+            lastUpdateTime = Date()
 
-                self.diagnosticSummaries.append(contentsOf: summaries)
-                self.lastUpdateTime = Date()
-
-                let totalCrashes = summaries.reduce(0) { $0 + $1.crashCount }
-                if totalCrashes > 0 {
-                    self.showAlert(title: "Crashes Detected",
-                                   message: "Detected \(totalCrashes) crash(es) in the diagnostic payload")
-                }
-
-                for summary in summaries {
-                    self.logDiagnosticSummary(summary)
-                }
+            if summary.crashCount > 0 {
+                showAlert(title: "Crash Detected",
+                          message: "Detected \(summary.crashCount) crash(es) in the diagnostic summary")
             }
+
+            logDiagnosticSummary(summary)
         }
     }
 
@@ -143,7 +144,8 @@ extension MetricsViewModel {
         - Avg CPU: \(String(format: "%.1f", summary.averageCPUPercentage))%
         - GPU Time: \(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s
         - Disk Writes: \(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB
-        - Scroll Hitch: \(String(format: "%.1f", summary.scrollHitchTimeRatio))%
+        - Hitch Rate: \(summary.hitchTimeRatio
+            .map { "\($0.formatted(.number.precision(.fractionLength(1)))) ms/s" } ?? "n/a")
         - Hang Time: \(String(format: "%.2f", summary.totalHangTimeSeconds))s
         - Launch Time: \(String(format: "%.2f", summary.averageLaunchTimeSeconds))s
         """)

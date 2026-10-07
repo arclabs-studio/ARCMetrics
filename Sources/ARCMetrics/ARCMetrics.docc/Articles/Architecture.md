@@ -13,63 +13,69 @@ ARCMetrics provides a clean abstraction layer over Apple's MetricKit framework. 
 │                           Your App                                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ┌──────────────────┐                                              │
-│  │   App/Scene      │                                              │
-│  │   Initialization │──┐                                           │
-│  └──────────────────┘  │                                           │
-│                        │ startCollecting()                         │
-│                        ▼                                           │
-│  ┌────────────────────────────────────────┐                        │
-│  │         MetricsProviding               │◄── Protocol            │
-│  │  (MetricKitProvider or Mock)           │                        │
-│  └───────────────┬────────────────────────┘                        │
+│  ┌──────────────────┐                                               │
+│  │ Composition Root │  creates ONE collector, startCollecting()     │
+│  └────────┬─────────┘                                               │
+│           │ injects                                                 │
+│           ▼                                                         │
+│  ┌────────────────────────────────────────┐                         │
+│  │         MetricsCollecting              │◄── Protocol             │
+│  │  (MetricsCollector or Mock)            │                         │
+│  └───────────────┬────────────────────────┘                         │
 │                  │                                                  │
-│                  │ onMetricPayloadsReceived                        │
-│                  │ onDiagnosticPayloadsReceived                    │
+│                  │ metricSummaries()      ─ one AsyncStream         │
+│                  │ diagnosticSummaries()    per subscriber          │
 │                  ▼                                                  │
-│  ┌──────────────────┐    ┌──────────────────┐                      │
-│  │   ViewModel      │───▶│   Analytics/     │                      │
-│  │   or Handler     │    │   Backend        │                      │
-│  └──────────────────┘    └──────────────────┘                      │
+│  ┌──────────────────┐    ┌──────────────────┐                       │
+│  │   ViewModel      │    │   Analytics/     │                       │
+│  │   (for await)    │    │   Backend        │                       │
+│  └──────────────────┘    └──────────────────┘                       │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│                       ARCMetrics                                 │
+│                          ARCMetrics                                 │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ┌─────────────────────────────────────────────────────────┐       │
-│  │              MetricKitProvider (Singleton)               │       │
-│  │                                                          │       │
-│  │  • Subscribes to MXMetricManager                        │       │
-│  │  • Implements MXMetricManagerSubscriber                 │       │
-│  │  • Stores pastMetricSummaries/pastDiagnosticSummaries   │       │
-│  │  • Thread-safe with @unchecked Sendable                 │       │
-│  └──────────────────────────┬──────────────────────────────┘       │
+│  ┌─────────────────────────────────────────────────────────┐        │
+│  │                  MetricsCollector                       │        │
+│  │                                                         │        │
+│  │  • Owns start/stop state (idempotent)                   │        │
+│  │  • Multicasts each summary to every stream subscriber   │        │
+│  │  • Picks a backend at runtime                           │        │
+│  └──────────────────────────┬──────────────────────────────┘        │
 │                             │                                       │
-│                             │ Raw MX payloads                       │
-│                             ▼                                       │
-│  ┌─────────────────────────────────────────────────────────┐       │
-│  │           MetricKitPayloadProcessor (Internal)          │       │
-│  │                                                          │       │
-│  │  • Transforms MXMetricPayload → MetricSummary           │       │
-│  │  • Transforms MXDiagnosticPayload → DiagnosticSummary   │       │
-│  │  • Extracts relevant fields from MX types               │       │
-│  └──────────────────────────┬──────────────────────────────┘       │
+│              ┌──────────────┼───────────────────┐                   │
+│              ▼              ▼                   ▼                   │
+│  ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐     │
+│  │ MetricManager    │ │ MXMetricManager  │ │ Unavailable      │     │
+│  │ backend          │ │ subscriber       │ │ (macOS < 27)     │     │
+│  │ iOS/macOS 27     │ │ iOS < 27,visionOS│ │ logs a warning   │     │
+│  └────────┬─────────┘ └────────┬─────────┘ └──────────────────┘     │
+│           │ MetricReport       │ MXMetricPayload                    │
+│           │ DiagnosticReport   │ MXDiagnosticPayload                │
+│           ▼                    ▼                                    │
+│  ┌─────────────────────────────────────────────────────────┐        │
+│  │           MetricKitPayloadProcessor (Internal)          │        │
+│  │                                                         │        │
+│  │  • Reads platform-free payload-source protocols         │        │
+│  │  • Units normalized at the adapters (MB, s, ms/s)       │        │
+│  │  • Builds MetricSummary / DiagnosticSummary             │        │
+│  └──────────────────────────┬──────────────────────────────┘        │
 │                             │                                       │
 │                             │ Simplified models                     │
 │                             ▼                                       │
-│  ┌────────────────────┐    ┌────────────────────┐                  │
-│  │   MetricSummary    │    │  DiagnosticSummary │                  │
-│  │                    │    │                    │                  │
-│  │  • Memory metrics  │    │  • Crash info      │                  │
-│  │  • CPU metrics     │    │  • Hang info       │                  │
-│  │  • GPU metrics     │    │  • Exception counts│                  │
-│  │  • Disk I/O        │    │                    │                  │
-│  │  • Animation       │    │                    │                  │
-│  │  • Network         │    │                    │                  │
-│  │  • Launch time     │    │                    │                  │
-│  └────────────────────┘    └────────────────────┘                  │
+│  ┌────────────────────┐    ┌────────────────────┐                   │
+│  │   MetricSummary    │    │  DiagnosticSummary │                   │
+│  │                    │    │                    │                   │
+│  │  • Memory metrics  │    │  • Crash info      │                   │
+│  │  • CPU metrics     │    │  • Hang info       │                   │
+│  │  • GPU metrics     │    │  • Exception counts│                   │
+│  │  • Disk I/O        │    │                    │                   │
+│  │  • Animation       │    │                    │                   │
+│  │  • Network         │    │                    │                   │
+│  │  • Launch time     │    │                    │                   │
+│  └────────────────────┘    └────────────────────┘                   │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 
@@ -77,28 +83,31 @@ ARCMetrics provides a clean abstraction layer over Apple's MetricKit framework. 
 │                     Apple MetricKit Framework                       │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  MXMetricManager ──▶ MXMetricPayload                               │
-│                  ──▶ MXDiagnosticPayload                           │
+│  iOS/macOS 27:  MetricManager ──▶ metricReports (async sequence)    │
+│                               ──▶ diagnosticReports                 │
+│  Earlier:       MXMetricManager ──▶ MXMetricPayload                 │
+│                                 ──▶ MXDiagnosticPayload             │
 │                                                                     │
-│  Delivers payloads ~every 24 hours (metrics)                       │
-│  Delivers immediately (diagnostics on iOS 15+)                     │
+│  Delivers metrics ~every 24 hours                                   │
+│  Delivers diagnostics immediately (iOS 15+)                         │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Key Types
 
-### MetricsProviding Protocol
+### MetricsCollecting Protocol
 
-The ``MetricsProviding`` protocol defines the contract for metrics providers:
+The ``MetricsCollecting`` protocol defines the contract for metrics collectors:
 
 ```swift
-public protocol MetricsProviding: AnyObject, Sendable {
-    var onMetricPayloadsReceived: (@Sendable ([MetricSummary]) -> Void)? { get set }
-    var onDiagnosticPayloadsReceived: (@Sendable ([DiagnosticSummary]) -> Void)? { get set }
+public protocol MetricsCollecting: Sendable {
+    func metricSummaries() -> AsyncStream<MetricSummary>
+    func diagnosticSummaries() -> AsyncStream<DiagnosticSummary>
 
     func startCollecting()
     func stopCollecting()
+    var isCollecting: Bool { get }
 
     var pastMetricSummaries: [MetricSummary] { get }
     var pastDiagnosticSummaries: [DiagnosticSummary] { get }
@@ -106,18 +115,23 @@ public protocol MetricsProviding: AnyObject, Sendable {
 ```
 
 This protocol enables:
-- **Dependency injection**: Pass providers to ViewModels and services
-- **Testing**: Create mock providers for unit tests
+- **Dependency injection**: Pass collectors to ViewModels and services
+- **Testing**: Inject `MockMetricsCollector` from the `ARCMetricsMocks` product
 - **SwiftUI previews**: Provide sample data without MetricKit
 
-### MetricKitProvider
+Every call to ``MetricsCollecting/metricSummaries()`` or ``MetricsCollecting/diagnosticSummaries()`` returns a new, independent stream that receives every summary delivered after the call. There is no replay; history comes from the `past…` properties.
 
-``MetricKitProvider`` is the production implementation:
+### MetricsCollector
 
-- **Singleton pattern**: Access via `MetricKitProvider.shared`
-- **MXMetricManagerSubscriber**: Receives raw MetricKit payloads
-- **Thread-safe**: Marked `@unchecked Sendable` with internal synchronization
-- **Historical data**: Stores received summaries in `pastMetricSummaries` and `pastDiagnosticSummaries`
+``MetricsCollector`` is the production implementation:
+
+- **One instance per app**: Created with ``MetricsCollector/init(logger:)`` and kept by the app. There is no singleton. Apple recommends a single `MetricManager`, because two tasks iterating the same report sequence each receive a non-deterministic subset of reports — so the collector reads each sequence exactly once and multicasts.
+- **Runtime backend selection**:
+  - iOS 27 / macOS 27: `MetricManager`'s `metricReports` and `diagnosticReports` async sequences. Compiled only with the Swift 6.4 toolchain (Xcode 27), because older SDKs do not contain `MetricManager`.
+  - iOS below 27 and all visionOS: an `MXMetricManager` subscriber. Apple marks `MXMetricManager` to-be-deprecated; it still works and raises no warning at this package's deployment targets.
+  - macOS below 27: none. `startCollecting()` logs a warning and nothing is delivered.
+- **Thread-safe**: Checked `Sendable`. Mutable state lives behind locks; there is no `@unchecked Sendable`.
+- **Historical data**: `pastMetricSummaries` / `pastDiagnosticSummaries` read MetricKit's on-device history below 27. On iOS / macOS 27 they hold only summaries delivered in the current process, because `MetricManager` has no history API.
 
 ### MetricSummary
 
@@ -129,7 +143,7 @@ This protocol enables:
 | CPU | `cumulativeCPUTimeSeconds`, `averageCPUPercentage` |
 | GPU | `cumulativeGPUTimeSeconds` |
 | Disk | `cumulativeDiskWritesMB` |
-| Animation | `scrollHitchTimeRatio` |
+| Animation | `hitchTimeRatio`, `scrollHitchTimeRatio` (both `Double?`, ms per second) |
 | Responsiveness | `totalHangTimeSeconds`, `averageLaunchTimeSeconds` |
 | Time | `foregroundTimeSeconds`, `backgroundTimeSeconds` |
 | Network | `cellularDownloadMB`, `cellularUploadMB`, `wifiDownloadMB`, `wifiUploadMB` |
@@ -142,72 +156,89 @@ This protocol enables:
 - **Hangs**: Count and detailed `HangInfo` with duration
 - **Exceptions**: `diskWriteExceptionCount`, `cpuExceptionCount`
 
+On iOS / macOS 27 each `DiagnosticReport` is a single event, so each summary holds exactly one crash, one hang, or one exception. App-launch and memory-exception diagnostics produce no summary.
+
 ## Data Flow
 
-1. **Subscription**: When `startCollecting()` is called, `MetricKitProvider` registers with `MXMetricManager`
+1. **Subscription**: When `startCollecting()` is called, `MetricsCollector` starts its backend — iterating `MetricManager`'s report sequences on 27, or registering with `MXMetricManager` below it
 
-2. **Delivery**: MetricKit delivers payloads to the `MXMetricManagerSubscriber` delegate methods
+2. **Delivery**: MetricKit delivers reports to the backend
 
 3. **Transformation**: `MetricKitPayloadProcessor` extracts relevant data and creates simplified models
 
-4. **Callbacks**: Callbacks are invoked with the transformed summaries
+4. **Fan-out**: Each summary is yielded to every open `metricSummaries()` / `diagnosticSummaries()` stream
 
-5. **Storage**: Summaries are stored in `pastMetricSummaries`/`pastDiagnosticSummaries` for later access
+5. **History**: Summaries are available from `pastMetricSummaries`/`pastDiagnosticSummaries` (see the platform note above)
 
 ## Thread Safety
 
 ARCMetrics is designed for Swift 6 strict concurrency:
 
-- All public types conform to `Sendable`
-- Callbacks are marked `@Sendable`
-- Internal state is protected against data races
-- Callbacks may be invoked on background threads—dispatch to `@MainActor` for UI updates
+- All public types conform to `Sendable`, with checked conformances only
+- Summaries arrive through `AsyncStream`, so you choose the isolation by choosing where you iterate
+- Internal state is protected by locks; nothing is called while a lock is held
+
+Iterate on the main actor to update UI directly — no hop needed:
 
 ```swift
-MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
-    Task { @MainActor in
-        self.updateUI(with: summaries)
+@MainActor
+@Observable
+final class DashboardViewModel {
+    private(set) var summaries: [MetricSummary] = []
+    private let collector: any MetricsCollecting
+
+    init(collector: any MetricsCollecting) {
+        self.collector = collector
+    }
+
+    func observe() async {
+        for await summary in collector.metricSummaries() {
+            summaries.append(summary)
+        }
     }
 }
 ```
 
 ## Testing Architecture
 
-For testing, create a mock that conforms to `MetricsProviding`:
+For testing, inject `MockMetricsCollector` from the `ARCMetricsMocks` product:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Test Environment                            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ┌──────────────────┐                                              │
-│  │   XCTestCase     │                                              │
-│  └────────┬─────────┘                                              │
+│  ┌──────────────────┐                                               │
+│  │   @Test          │                                               │
+│  └────────┬─────────┘                                               │
 │           │                                                         │
 │           │ injects                                                 │
 │           ▼                                                         │
-│  ┌────────────────────────────────────────┐                        │
-│  │         MockMetricsProvider            │                        │
-│  │                                        │                        │
-│  │  • simulateMetricPayload()            │                        │
-│  │  • simulateDiagnosticPayload()        │                        │
-│  │  • Tracks call counts                 │                        │
-│  │  • Stores simulated data              │                        │
-│  └────────────────────────────────────────┘                        │
+│  ┌────────────────────────────────────────┐                         │
+│  │         MockMetricsCollector           │                         │
+│  │                                        │                         │
+│  │  • simulate(metric:)                   │                         │
+│  │  • simulate(diagnostic:)               │                         │
+│  │  • Tracks start/stop call counts       │                         │
+│  │  • Fixed past summaries via init       │                         │
+│  └────────────────────────────────────────┘                         │
 │           │                                                         │
 │           │ conforms to                                             │
 │           ▼                                                         │
-│  ┌────────────────────────────────────────┐                        │
-│  │         MetricsProviding               │                        │
-│  └────────────────────────────────────────┘                        │
+│  ┌────────────────────────────────────────┐                         │
+│  │         MetricsCollecting              │                         │
+│  └────────────────────────────────────────┘                         │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+`ARCMetricsMocks` also provides `RecordingSignpostTracer`, a ``SignpostTracing`` double that records every `emit`, `begin`, and `end` call.
+
 ## See Also
 
-- ``MetricsProviding``
-- ``MetricKitProvider``
+- ``MetricsCollecting``
+- ``MetricsCollector``
 - ``MetricSummary``
 - ``DiagnosticSummary``
 - <doc:GettingStarted>
+- <doc:MigratingToV2>

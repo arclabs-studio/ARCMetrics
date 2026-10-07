@@ -27,6 +27,7 @@ struct StubMetricPayload: MetricPayloadSource {
     var wifiUploadMB: Double?
     var cumulativeDiskWritesMB: Double?
     var scrollHitchTimeRatio: Double?
+    var hitchTimeRatio: Double?
 }
 
 /// Plain stand-in for `MXDiagnosticPayload`.

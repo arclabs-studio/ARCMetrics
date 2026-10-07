@@ -12,10 +12,10 @@ import Foundation
 ///
 /// The processor never imports MetricKit. It reads ``MetricPayloadSource`` and
 /// ``DiagnosticPayloadSource``, which `MXMetricPayload` / `MXDiagnosticPayload`
-/// conform to behind an `#if` in `MetricKitPayloadAdapters.swift`. That seam is
-/// what makes this — the aggregation logic, where the bugs are — testable on
-/// macOS CI with plain structs, and what lets an iOS 27 `MetricReport` reader
-/// slot in beside the legacy one without touching this file.
+/// conform to behind an `#if` in `MetricKitPayloadAdapters.swift`, and which the
+/// iOS / macOS 27 `MetricReport` conforms to in `MetricReportAdapters.swift`.
+/// That seam keeps the aggregation logic, where the bugs are, testable on
+/// macOS CI with plain structs.
 struct MetricKitPayloadProcessor: Sendable {
     // MARK: - Properties
 
@@ -51,9 +51,10 @@ struct MetricKitPayloadProcessor: Sendable {
         summary.wifiUploadMB = payload.wifiUploadMB ?? 0
         summary.cumulativeDiskWritesMB = payload.cumulativeDiskWritesMB ?? 0
 
-        // MetricKit reports the hitch ratio in 0...1; the model is documented as
-        // a percentage.
-        summary.scrollHitchTimeRatio = (payload.scrollHitchTimeRatio ?? 0) * 100
+        // Both MetricKit generations report hitch ratios in ms per second
+        // (measured on device). 1.x multiplied by 100 here, which was wrong.
+        summary.scrollHitchTimeRatio = payload.scrollHitchTimeRatio
+        summary.hitchTimeRatio = payload.hitchTimeRatio
 
         summary.totalHangTimeSeconds = Self.weightedTotalSeconds(payload.hangTimeBuckets ?? [])
         summary.averageLaunchTimeSeconds = Self.weightedAverageSeconds(payload.launchTimeBuckets ?? [])
