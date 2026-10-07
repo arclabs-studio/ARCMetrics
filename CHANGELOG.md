@@ -5,7 +5,7 @@ All notable changes to ARCMetrics will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - Unreleased
+## [2.0.0] - 2026-10-07
 
 ARCMetrics 2.0 moves to Apple's iOS / macOS 27 `MetricManager` API and replaces the callback singleton with an owned collector that publishes `AsyncStream`s. Step-by-step upgrade guide: [Migrating to ARCMetrics 2.0](Sources/ARCMetrics/ARCMetrics.docc/Articles/MigratingToV2.md).
 
