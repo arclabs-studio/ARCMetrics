@@ -10,7 +10,9 @@ import os.log
 import struct os.OSAllocatedUnfairLock
 import os.signpost
 
-#if os(iOS) || os(visionOS)
+// macOS needs MetricKit only for the iOS/macOS 27 path. Older macOS SDKs
+// (Xcode 16, as on CI) mark `mxSignpost` unavailable on macOS.
+#if os(iOS) || os(visionOS) || (os(macOS) && compiler(>=6.4))
 import MetricKit
 #endif
 
@@ -18,8 +20,11 @@ import MetricKit
 ///
 /// ## Why `mxSignpost` and not `OSSignposter`
 ///
-/// On iOS and visionOS this emits through `mxSignpost` on a log handle from
-/// `MXMetricManager.makeLogHandle(category:)`. Apple's own guidance is explicit:
+/// On iOS and visionOS this emits through `mxSignpost` on a MetricKit log
+/// handle: `MetricManager.logHandle(category:)` on iOS 27, and
+/// `MXMetricManager.makeLogHandle(category:)` below it and on visionOS (where
+/// `logHandle(category:)` is unavailable). macOS 27 does the same with
+/// `MetricManager`. Apple's own guidance is explicit:
 /// you *can* use `OSSignposter` with that handle, but **only `mxSignpost`
 /// populates the measurement properties** — CPU time, memory, logical writes —
 /// that make a span worth aggregating.
@@ -31,8 +36,8 @@ import MetricKit
 /// (`MXSignpostMetric` → `SignpostIntervalMetric`), so spans added now keep
 /// working unchanged.
 ///
-/// On other platforms there is no MetricKit, so this falls back to a plain
-/// `OSLog` and `os_signpost`: still visible in Instruments, with no aggregation.
+/// macOS before 27 gets no MetricKit aggregation, so it falls back to a plain
+/// `OSLog` and `os_signpost`: still visible in Instruments.
 ///
 /// ## Overlapping intervals
 ///
@@ -47,16 +52,27 @@ import MetricKit
 public struct MetricKitSignpostTracer: SignpostTracing {
     // MARK: - Nested Types
 
+    /// A log handle and how to emit on it.
+    private struct Handle: Sendable {
+        let log: OSLog
+        /// Whether to emit through `mxSignpost`, which is what populates
+        /// MetricKit's per-span CPU / memory / logical-writes measurements.
+        let usesMetricKit: Bool
+    }
+
     /// Lazily built log handles, one per category.
-    private final class HandleCache: @unchecked Sendable {
-        private let storage = OSAllocatedUnfairLock(initialState: [SignpostCategory: OSLog]())
+    ///
+    /// Checked `Sendable`: both stored properties are constants, and the cache
+    /// itself lives behind a lock.
+    private final class HandleCache: Sendable {
+        private let storage = OSAllocatedUnfairLock(initialState: [SignpostCategory: Handle]())
         private let mirrorSubsystem: String?
 
         init(mirrorSubsystem: String?) {
             self.mirrorSubsystem = mirrorSubsystem
         }
 
-        func handle(for category: SignpostCategory) -> OSLog {
+        func handle(for category: SignpostCategory) -> Handle {
             if let cached = storage.withLock({ $0[category] }) {
                 return cached
             }
@@ -70,15 +86,27 @@ public struct MetricKitSignpostTracer: SignpostTracing {
             }
         }
 
-        private func makeHandle(for category: SignpostCategory) -> OSLog {
+        private func makeHandle(for category: SignpostCategory) -> Handle {
             if let mirrorSubsystem {
-                return OSLog(subsystem: mirrorSubsystem, category: category.rawValue)
+                #if os(iOS) || os(visionOS)
+                let usesMetricKit = true
+                #else
+                let usesMetricKit = false
+                #endif
+                return Handle(log: OSLog(subsystem: mirrorSubsystem, category: category.rawValue),
+                              usesMetricKit: usesMetricKit)
             }
+            #if compiler(>=6.4) && (os(iOS) || os(macOS))
+            if #available(iOS 27, macOS 27, *) {
+                return Handle(log: MetricManager.logHandle(category: category.rawValue), usesMetricKit: true)
+            }
+            #endif
             #if os(iOS) || os(visionOS)
-            return MXMetricManager.makeLogHandle(category: category.rawValue)
+            return Handle(log: MXMetricManager.makeLogHandle(category: category.rawValue), usesMetricKit: true)
             #else
-            return OSLog(subsystem: Bundle.main.bundleIdentifier ?? "ARCMetrics",
-                         category: category.rawValue)
+            return Handle(log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "ARCMetrics",
+                                     category: category.rawValue),
+                          usesMetricKit: false)
             #endif
         }
     }
@@ -108,28 +136,28 @@ public struct MetricKitSignpostTracer: SignpostTracing {
 
     public func emit(_ name: StaticString, category: SignpostCategory) {
         guard isEnabled else { return }
-        let log = cache.handle(for: category)
-        guard log.signpostsEnabled else { return }
-        Self.signpost(.event, log: log, name: name, id: OSSignpostID(log: log))
+        let handle = cache.handle(for: category)
+        guard handle.log.signpostsEnabled else { return }
+        Self.signpost(.event, on: handle, name: name, id: OSSignpostID(log: handle.log))
     }
 
     public func begin(_ name: StaticString, category: SignpostCategory) -> SignpostInterval {
         guard isEnabled else { return .inactive(name: name, category: category) }
-        let log = cache.handle(for: category)
+        let handle = cache.handle(for: category)
         // Signposts can be switched off system-wide; skip the work rather than
         // pay for ID minting and an emission the system will discard.
-        guard log.signpostsEnabled else { return .inactive(name: name, category: category) }
+        guard handle.log.signpostsEnabled else { return .inactive(name: name, category: category) }
         // Per-interval ID, never `.exclusive`: overlapping same-name intervals
         // are expected and `.exclusive` would mispair them.
-        let id = OSSignpostID(log: log)
-        Self.signpost(.begin, log: log, name: name, id: id)
+        let id = OSSignpostID(log: handle.log)
+        Self.signpost(.begin, on: handle, name: name, id: id)
         return SignpostInterval(name: name, category: category, rawID: id.rawValue, isActive: true)
     }
 
     public func end(_ interval: SignpostInterval) {
         guard interval.isActive else { return }
-        let log = cache.handle(for: interval.category)
-        Self.signpost(.end, log: log, name: interval.name, id: OSSignpostID(interval.rawID))
+        let handle = cache.handle(for: interval.category)
+        Self.signpost(.end, on: handle, name: interval.name, id: OSSignpostID(interval.rawID))
     }
 }
 
@@ -138,14 +166,16 @@ public struct MetricKitSignpostTracer: SignpostTracing {
 extension MetricKitSignpostTracer {
     /// Single emission point, so the MetricKit-vs-`os_signpost` choice lives in
     /// exactly one place.
-    private static func signpost(_ type: OSSignpostType, log: OSLog, name: StaticString, id: OSSignpostID) {
-        #if os(iOS) || os(visionOS)
-        // Only `mxSignpost` populates SignpostIntervalMetric's CPU / memory /
-        // logical-writes measurements. `OSSignposter` on the same handle would
-        // be Instruments-visible but yield no aggregate.
-        mxSignpost(type, log: log, name: name, signpostID: id)
-        #else
-        os_signpost(type, log: log, name: name, signpostID: id)
+    private static func signpost(_ type: OSSignpostType, on handle: Handle, name: StaticString, id: OSSignpostID) {
+        #if os(iOS) || os(visionOS) || (os(macOS) && compiler(>=6.4))
+        if handle.usesMetricKit {
+            // Only `mxSignpost` populates SignpostIntervalMetric's CPU / memory /
+            // logical-writes measurements. `OSSignposter` on the same handle would
+            // be Instruments-visible but yield no aggregate.
+            mxSignpost(type, log: handle.log, name: name, signpostID: id)
+            return
+        }
         #endif
+        os_signpost(type, log: handle.log, name: name, signpostID: id)
     }
 }

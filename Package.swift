@@ -7,8 +7,8 @@ let package = Package(name: "ARCMetrics",
 
                       // MARK: - Platforms
 
-                      // Note: MetricKit is only available on iOS and visionOS.
-                      // macOS is included for development tooling compatibility only.
+                      // MetricKit backends: MetricManager on iOS / macOS 27, MXMetricManager on
+                      // earlier iOS and visionOS. macOS before 27 builds but delivers nothing.
                       platforms: [.iOS(.v17),
                                   .macOS(.v14),
                                   .visionOS(.v1)],
@@ -16,7 +16,9 @@ let package = Package(name: "ARCMetrics",
                       // MARK: - Products
 
                       products: [.library(name: "ARCMetrics",
-                                          targets: ["ARCMetrics"])],
+                                          targets: ["ARCMetrics"]),
+                                 .library(name: "ARCMetricsMocks",
+                                          targets: ["ARCMetricsMocks"])],
 
                       // MARK: - Dependencies
 
@@ -28,13 +30,18 @@ let package = Package(name: "ARCMetrics",
                       targets: [// Main library
                           .target(name: "ARCMetrics",
                                   dependencies: [.product(name: "ARCLogger", package: "ARCLogger")],
-                                  path: "Sources/ARCMetrics",
-                                  swiftSettings: [.enableUpcomingFeature("StrictConcurrency")]),
+                                  path: "Sources/ARCMetrics"),
+
+                          // Test doubles for consumers of ARCMetrics
+                          .target(name: "ARCMetricsMocks",
+                                  dependencies: ["ARCMetrics"],
+                                  path: "Sources/ARCMetricsMocks"),
 
                           // Tests
                           .testTarget(name: "ARCMetricsTests",
-                                      dependencies: ["ARCMetrics"],
-                                      path: "Tests/ARCMetricsTests")],
+                                      dependencies: ["ARCMetrics", "ARCMetricsMocks"],
+                                      path: "Tests/ARCMetricsTests",
+                                      resources: [.copy("Fixtures")])],
 
                       // MARK: - Swift Language
 

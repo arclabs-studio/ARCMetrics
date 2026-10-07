@@ -10,7 +10,7 @@ This guide addresses frequently encountered issues when integrating and using AR
 
 ### No Metrics Received
 
-**Symptom**: Callbacks are never invoked despite calling `startCollecting()`.
+**Symptom**: Your `for await` loops over `metricSummaries()` / `diagnosticSummaries()` never receive anything despite calling `startCollecting()`.
 
 **Possible causes**:
 
@@ -23,16 +23,38 @@ This guide addresses frequently encountered issues when integrating and using AR
 3. **Debug builds**: Some metrics require release builds
    - Solution: Test with TestFlight or Ad Hoc distribution
 
-4. **Callbacks set after start**: Callbacks were set too late
-   - Solution: Set callbacks before calling `startCollecting()`
+4. **Subscribed after delivery**: Streams don't replay — a subscriber sees only summaries delivered after it called `metricSummaries()` / `diagnosticSummaries()`
+   - Solution: Subscribe early (for example in a `.task` on your root view), and read `pastMetricSummaries` / `pastDiagnosticSummaries` for anything delivered before
+
+5. **macOS before 27**: The collector has no MetricKit backend there; `startCollecting()` logs "MetricKit is not available on this platform" and nothing is delivered
+
+6. **A second collector**: Each ``MetricsCollector`` reads MetricKit independently. On iOS / macOS 27, two `MetricManager` readers each receive a non-deterministic subset of reports
+   - Solution: Create one collector and inject it everywhere
 
 ```swift
-// Correct order
-MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
-    // Handle metrics
+// One collector, subscribed from the first view that appears
+private let metrics = MetricsCollector()
+
+var body: some Scene {
+    WindowGroup {
+        ContentView()
+            .task {
+                metrics.startCollecting()
+                for await summary in metrics.metricSummaries() {
+                    await analytics.send(summary)
+                }
+            }
+    }
 }
-MetricKitProvider.shared.startCollecting() // Call AFTER setting callbacks
 ```
+
+### Past Summaries Empty After Relaunch
+
+**Symptom**: `pastMetricSummaries` / `pastDiagnosticSummaries` are empty at every launch on iOS or macOS 27, though they contained data on iOS 26.
+
+**Cause**: `MetricManager` has no history API. On 27 these properties hold only summaries delivered in the current process.
+
+**Solution**: Persist summaries yourself as they arrive. Both summary types are `Codable`.
 
 ### Incomplete Metric Data
 
@@ -67,14 +89,10 @@ MetricKitProvider.shared.startCollecting() // Call AFTER setting callbacks
 **Solution**: Process payloads asynchronously and avoid storing raw data:
 
 ```swift
-MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
-    Task {
-        for summary in summaries {
-            // Process and send to backend immediately
-            await analytics.send(summary)
-            // Don't accumulate in memory
-        }
-    }
+for await summary in metrics.metricSummaries() {
+    // Process and send to backend immediately
+    await analytics.send(summary)
+    // Don't accumulate in memory
 }
 ```
 
@@ -82,14 +100,25 @@ MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
 
 **Symptom**: Crashes or unexpected behavior when accessing metrics from multiple threads.
 
-**Cause**: MetricKit callbacks may be invoked on background threads.
+**Cause**: MetricKit delivers reports on background threads of its choosing.
 
-**Solution**: Dispatch to main thread for UI updates:
+**Solution**: Iterate the stream on the main actor. A `.task` in a view, or an `async` method of a `@MainActor` view model, already runs there, so UI updates need no hop:
 
 ```swift
-MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
-    Task { @MainActor in
-        self.updateUI(with: summaries)
+@MainActor
+@Observable
+final class MetricsViewModel {
+    private(set) var latestMetrics: MetricSummary?
+    private let collector: any MetricsCollecting
+
+    init(collector: any MetricsCollecting) {
+        self.collector = collector
+    }
+
+    func observeMetrics() async {
+        for await summary in collector.metricSummaries() {
+            latestMetrics = summary
+        }
     }
 }
 ```
@@ -125,14 +154,14 @@ MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
    ```swift
    // Problem: Multiple individual saves
    for item in items {
-       context.save()  // Disk write for each!
+       try context.save()  // Disk write for each!
    }
 
    // Solution: Batch saves
    for item in items {
        // modify items
    }
-   context.save()  // Single disk write
+   try context.save()  // Single disk write
    ```
 
 3. **Analytics/logging writes**: Writing logs synchronously
@@ -141,9 +170,11 @@ MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
 4. **Image caching**: Storing full-resolution images
    - Solution: Use thumbnail caching and lazy loading
 
-### Scroll Hitch Ratio Unexpectedly High
+### Hitch Ratio Unexpectedly High
 
-**Symptom**: `scrollHitchTimeRatio` is > 5% despite smooth-looking scrolling.
+**Symptom**: `hitchTimeRatio` or `scrollHitchTimeRatio` is above 5 ms/s despite smooth-looking scrolling.
+
+> Note: Both values are in **milliseconds per second**. ARCMetrics 1.x multiplied `scrollHitchTimeRatio` by 100 and called it a percentage, so 1.x values — including any you persisted — are 100 times too large. See <doc:MigratingToV2>.
 
 **Possible causes**:
 
@@ -164,14 +195,21 @@ MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
 4. **Image loading**: Decoding images on the main thread
    - Solution: Use `preparingForDisplay()` or background decoding
 
-**Debugging scroll hitches**:
+**Debugging hitches**: record with the **Animation Hitches** instrument — see <doc:InstrumentsIntegration>.
 
-```swift
-// Enable hitches logging in debug builds
-#if DEBUG
-CAMetalLayer.enableHitchIndicator = true
-#endif
-```
+### Scroll Hitch Ratio Always Nil
+
+**Symptom**: `scrollHitchTimeRatio` is `nil` on iOS 27.
+
+**Cause**: `MetricManager` has no scroll-only hitch metric; only the `MXMetricManager` path (iOS before 27, visionOS) reports it, and only for `UIScrollView`.
+
+**Solution**: Use `hitchTimeRatio`, which covers all tracked animations.
+
+### Fewer Diagnostic Kinds on iOS 27
+
+**Symptom**: On iOS or macOS 27 every `DiagnosticSummary` contains a single event, and app-launch or memory-exception diagnostics never appear.
+
+**Cause**: Each `DiagnosticReport` is one event, and `DiagnosticSummary` has no fields for app-launch or memory-exception diagnostics, so those reports are skipped.
 
 ## Platform-Specific Notes
 
@@ -179,13 +217,13 @@ CAMetalLayer.enableHitchIndicator = true
 
 - Full MetricKit support
 - Diagnostic payloads immediate on iOS 15+
+- iOS 27 uses `MetricManager` when built with Xcode 27; earlier iOS uses `MXMetricManager`
 - Best tested via TestFlight
 
 ### macOS
 
-- MetricKit available on macOS 12+
-- Mac Catalyst apps fully supported
-- Native macOS apps fully supported
+- macOS 27: collected through `MetricManager` when built with Xcode 27
+- macOS 14–26: no collection — ARCMetrics has no MetricKit backend there and logs a warning
 
 ### watchOS
 
@@ -203,30 +241,36 @@ CAMetalLayer.enableHitchIndicator = true
 
 ### Enable Verbose Logging
 
-ARCMetrics uses ARCLogger internally. Enable debug logging:
+ARCMetrics logs through the ARCLogger you pass to ``MetricsCollector/init(logger:)``. The default is `ARCLogger(category: "MetricKit")`. To also mirror debug lines to Xcode's console:
 
 ```swift
-// In your app's initialization
-ARCLogger.setMinimumLevel(.debug)
+import ARCLogger
+import ARCMetrics
+
+let metrics = MetricsCollector(
+    logger: ARCLogger(destinations: [ConsoleDestination(minimumLevel: .debug, mirrorsToStdout: true)],
+                      category: "MetricKit")
+)
 ```
 
 ### Verify Subscription
 
-Check if MetricKit subscription is active:
+Check whether collection is running:
 
 ```swift
-// In debug builds
 #if DEBUG
-print("MetricKit subscribers: \(MXMetricManager.shared)")
+print("MetricKit collecting: \(metrics.isCollecting)")
 #endif
 ```
 
 ### Simulate Payloads
 
 Use Xcode's built-in simulation:
-1. Connect physical device
+1. Connect a physical device — the menu item does not appear when running on the Simulator
 2. Run app in debug mode
-3. **Debug** → **Simulate MetricKit Payload**
+3. **Debug** → **MetricKit** → **Simulate MetricKit Payloads**
+
+Simulated reports contain sample data, not measurements of your app.
 
 ## Getting Help
 
@@ -244,4 +288,5 @@ If you encounter issues not covered here:
 
 - <doc:GettingStarted>
 - <doc:UnderstandingMetrics>
-- ``MetricKitProvider``
+- <doc:MigratingToV2>
+- ``MetricsCollector``

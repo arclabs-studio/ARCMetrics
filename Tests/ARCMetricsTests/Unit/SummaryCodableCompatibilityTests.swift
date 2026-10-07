@@ -43,11 +43,13 @@ import Testing
         // When
         let summary = try JSONDecoder().decode(MetricSummary.self, from: json)
 
-        // Then
+        // Then — v1's shape predates `hitchTimeRatio` entirely, so it decodes
+        // nil rather than falling back to a default of its own.
         #expect(summary.interval == nil)
         #expect(summary.timeRange == "1/1/25, 9:00 AM - 1/2/25, 9:00 AM")
         #expect(summary.peakMemoryUsageMB == 180.5)
         #expect(summary.scrollHitchTimeRatio == 2.3)
+        #expect(summary.hitchTimeRatio == nil)
     }
 
     @Test("A metric payload carrying only timeRange decodes to defaults") func decodesMinimalMetricSummary() throws {
@@ -57,9 +59,12 @@ import Testing
         // When
         let summary = try JSONDecoder().decode(MetricSummary.self, from: json)
 
-        // Then
+        // Then — non-optional metrics default to 0; the hitch ratios are
+        // `Double?` and default to `nil`, not `0`.
         #expect(summary.peakMemoryUsageMB == 0)
         #expect(summary.averageLaunchTimeSeconds == 0)
+        #expect(summary.scrollHitchTimeRatio == nil)
+        #expect(summary.hitchTimeRatio == nil)
     }
 
     @Test("A metric payload missing timeRange is rejected") func rejectsMetricSummaryWithoutTimeRange() {
@@ -77,6 +82,7 @@ import Testing
         var summary = MetricSummary(interval: .fixture())
         summary.peakMemoryUsageMB = 180.5
         summary.scrollHitchTimeRatio = 2.3
+        summary.hitchTimeRatio = 7.5
 
         // When
         let decoded = try JSONDecoder().decode(MetricSummary.self, from: JSONEncoder().encode(summary))
@@ -84,6 +90,21 @@ import Testing
         // Then
         #expect(decoded == summary)
         #expect(decoded.interval == DateInterval.fixture())
+        #expect(decoded.hitchTimeRatio == 7.5)
+    }
+
+    @Test("A metric summary round-trips with both hitch ratios nil, not coerced to zero")
+    func metricSummaryRoundTripsPreservesNilHitchRatios() throws {
+        // Given — neither hitch field was ever set
+        let summary = MetricSummary(interval: .fixture())
+
+        // When
+        let decoded = try JSONDecoder().decode(MetricSummary.self, from: JSONEncoder().encode(summary))
+
+        // Then
+        #expect(decoded == summary)
+        #expect(decoded.scrollHitchTimeRatio == nil)
+        #expect(decoded.hitchTimeRatio == nil)
     }
 
     // MARK: - Diagnostic Summary

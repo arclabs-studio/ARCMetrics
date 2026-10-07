@@ -180,7 +180,7 @@ struct AboutView: View {
                     MetricTypeRow(icon: "cpu", title: "CPU", description: "Utilization percentage")
                     MetricTypeRow(icon: "gpu", title: "GPU", description: "Graphics processing time")
                     MetricTypeRow(icon: "externaldrive", title: "Disk I/O", description: "Write activity")
-                    MetricTypeRow(icon: "scroll", title: "Animation", description: "Scroll hitch ratio")
+                    MetricTypeRow(icon: "scroll", title: "Animation", description: "Hitch time ratio")
                     MetricTypeRow(icon: "hourglass", title: "Hangs", description: "UI freeze time")
                     MetricTypeRow(icon: "timer", title: "Launches", description: "Time to first frame")
                     MetricTypeRow(icon: "network", title: "Network", description: "Cellular & WiFi usage")

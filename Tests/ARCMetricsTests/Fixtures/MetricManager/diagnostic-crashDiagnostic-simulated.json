@@ -1,0 +1,91 @@
+{
+  "crashDiagnostic" : {
+    "callStackTree" : {
+      "binaryInfo" : [
+        {
+          "name" : "testBinaryName",
+          "uuid" : "5AC1110B-D9E6-4F28-8ADD-10A7E9807401"
+        }
+      ],
+      "callStackPerThread" : true,
+      "callStackThreads" : [
+        {
+          "rootFrames" : [
+            {
+              "address" : 4294971392,
+              "binaryUUID" : "5AC1110B-D9E6-4F28-8ADD-10A7E9807401",
+              "offsetIntoBinaryTextSegment" : 4096,
+              "sampleCount" : 15,
+              "subFrames" : [
+
+              ]
+            }
+          ],
+          "threadAttributed" : true
+        }
+      ]
+    },
+    "exceptionCode" : 0,
+    "exceptionReason" : {
+      "arguments" : [
+        "NSArray",
+        "objectAtIndex:",
+        "0"
+      ],
+      "className" : "NSException",
+      "composedMessage" : "*** -[NSArray objectAtIndex:]: index 0 beyond bounds for empty array",
+      "exceptionName" : "NSRangeException",
+      "exceptionType" : "NSRangeException",
+      "formatString" : "*** -[%@ %@]: index %@ beyond bounds for empty array"
+    },
+    "exceptionType" : 1,
+    "signal" : 11,
+    "terminationCategory" : "badAccess",
+    "terminationReason" : "Namespace SIGNAL, Code 0xb",
+    "virtualMemoryRegionInfo" : "0 is not in any region.  Bytes before following region: 4000000000 REGION TYPE                      START - END             [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL UNUSED SPACE AT START ---> __TEXT                 0000000000000000-0000000000000000 [   32K] r-x\/r-x SM=COW  ...pp\/Test"
+  },
+  "environment" : {
+    "applicationBuildVersion" : "1.0",
+    "applicationVersion" : "1.0.0",
+    "bundleIdentifier" : "com.arclabsstudio.arcmetrics.example",
+    "deviceType" : "iPhone17,3",
+    "isTestFlightApp" : false,
+    "lowPowerModeEnabled" : true,
+    "osVersion" : {
+      "buildNumber" : "24A437",
+      "number" : "27.0",
+      "platform" : "iPhone OS"
+    },
+    "pid" : 123,
+    "platformArchitecture" : "arm64e",
+    "regionFormat" : "ES",
+    "signpostData" : [
+      {
+        "category" : "testEventCategory",
+        "interval" : {
+          "begin" : 813012100.26857,
+          "end" : 813012100.26857
+        },
+        "name" : "testEventName",
+        "subsystem" : "testEventSubsystem"
+      },
+      {
+        "category" : "testIntervalCategory",
+        "interval" : {
+          "begin" : 813012095.26857,
+          "end" : 813012100.26857
+        },
+        "name" : "testIntervalName",
+        "subsystem" : "testIntervalSubsystem"
+      }
+    ],
+    "states" : [
+
+    ]
+  },
+  "timeRange" : {
+    "begin" : 813012100.268845,
+    "end" : 813012100.268845
+  },
+  "version" : "2.0.0"
+}

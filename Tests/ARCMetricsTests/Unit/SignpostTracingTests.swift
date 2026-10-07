@@ -5,11 +5,12 @@
 //  Created by ARC Labs Studio on 2026-08-21.
 //
 
+import ARCMetrics
+import ARCMetricsMocks
 import Foundation
 import Testing
-@testable import ARCMetrics
 
-@Suite("Signpost tracing", .tags(.unit)) struct SignpostTracingTests {
+@Suite("Signpost tracing", .tags(.unit), .timeLimit(.minutes(1))) struct SignpostTracingTests {
     // MARK: - Scoped Measurement
 
     @Test("measure opens exactly one interval and closes it") func measurePairsOnce() {
@@ -93,9 +94,7 @@ import Testing
                 try await Task.sleep(for: .seconds(10))
             }
         }
-        while sut.beginCount == 0 {
-            await Task.yield()
-        }
+        await waitUntil { sut.beginCount == 1 }
         task.cancel()
         _ = await task.result
 
@@ -257,32 +256,6 @@ struct SignpostMeasureIsolationTests {
         // Then
         #expect(box.value == 0)
         #expect(sut.endCount == 1)
-    }
-}
-
-// MARK: - Categories
-
-@Suite("SignpostCategory", .tags(.unit)) struct SignpostCategoryTests {
-    @Test("Standard categories carry their display names") func standardCategoryNames() {
-        #expect(SignpostCategory.launch.rawValue == "Launch")
-        #expect(SignpostCategory.persistence.rawValue == "Persistence")
-        #expect(SignpostCategory.network.rawValue == "Network")
-        #expect(SignpostCategory.media.rawValue == "Media")
-        #expect(SignpostCategory.intelligence.rawValue == "Intelligence")
-    }
-
-    @Test("A category can be written as a string literal") func expressibleByStringLiteral() {
-        // Given / When
-        let custom: SignpostCategory = "Sync"
-
-        // Then
-        #expect(custom.rawValue == "Sync")
-        #expect(custom == SignpostCategory(rawValue: "Sync"))
-    }
-
-    @Test("Categories with the same raw value hash alike") func hashesByRawValue() {
-        // Given / When / Then
-        #expect(Set([SignpostCategory.launch, "Launch"]).count == 1)
     }
 }
 

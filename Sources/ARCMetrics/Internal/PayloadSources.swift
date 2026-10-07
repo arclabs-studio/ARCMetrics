@@ -33,9 +33,8 @@ struct DurationBucket: Sendable, Equatable, Hashable {
 /// Units are normalized at the boundary (MB, seconds) so the adapter owns unit
 /// conversion and the processor owns aggregation.
 ///
-/// - Note: This is also the iOS 27 migration path. When `MetricManager` /
-///   `MetricReport` leave Beta, conform their types here and the processor is
-///   unchanged.
+/// `MetricReport` (iOS / macOS 27) conforms the same way, so both MetricKit
+/// generations share one processor.
 protocol MetricPayloadSource {
     /// Period the payload aggregates over.
     var interval: DateInterval { get }
@@ -72,8 +71,12 @@ protocol MetricPayloadSource {
     /// Cumulative logical disk writes, in megabytes.
     var cumulativeDiskWritesMB: Double? { get }
 
-    /// Scroll hitch time as a raw ratio in `0...1`, *not* a percentage.
+    /// Hitch time while scrolling, in milliseconds per second.
+    ///
+    /// Only the `MXMetricPayload` path reports a scroll-only figure.
     var scrollHitchTimeRatio: Double? { get }
+    /// Hitch time across all tracked animations, in milliseconds per second.
+    var hitchTimeRatio: Double? { get }
 }
 
 // MARK: - DiagnosticPayloadSource

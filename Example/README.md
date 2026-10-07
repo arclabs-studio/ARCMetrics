@@ -25,8 +25,8 @@ xcodegen generate
 
 ## Features Demonstrated
 
-- **MetricKit Integration**: Collecting performance metrics with `MetricKitProvider`
-- **Callbacks**: Handling metric and diagnostic payload callbacks
+- **MetricKit Integration**: Collecting performance metrics with `MetricsCollector`
+- **Async Streams**: Reading metric and diagnostic summaries with `for await`
 - **Live Dashboard**: Real-time visualization of received metrics
 - **Performance Simulators**: Testing different performance scenarios
 

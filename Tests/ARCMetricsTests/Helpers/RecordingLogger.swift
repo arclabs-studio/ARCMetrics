@@ -7,23 +7,24 @@
 
 import ARCLogger
 import Foundation
+import struct os.OSAllocatedUnfairLock
 
 // The 6-parameter `log` signature is mandated by ARCLogger's `Logger` protocol,
 // which disables the same rule at its own declaration site.
 // swiftlint:disable function_parameter_count
 
-/// Captures log lines so a test can assert on severity routing.
-final class RecordingLogger: Logger, @unchecked Sendable {
+/// Captures log lines so a test can assert on severity routing. Checked
+/// `Sendable`: the entries live behind a lock.
+final class RecordingLogger: Logger {
     struct Entry: Sendable, Equatable {
         let message: String
         let level: LogLevel
     }
 
-    private let lock = NSLock()
-    private var storage: [Entry] = []
+    private let storage = OSAllocatedUnfairLock<[Entry]>(initialState: [])
 
     var entries: [Entry] {
-        lock.withLock { storage }
+        storage.withLock { $0 }
     }
 
     func entries(at level: LogLevel) -> [Entry] {
@@ -36,7 +37,7 @@ final class RecordingLogger: Logger, @unchecked Sendable {
              file _: String,
              function _: String,
              line _: Int) {
-        lock.withLock { storage.append(Entry(message: message, level: level)) }
+        storage.withLock { $0.append(Entry(message: message, level: level)) }
     }
 }
 

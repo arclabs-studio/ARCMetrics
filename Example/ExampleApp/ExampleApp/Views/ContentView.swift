@@ -145,8 +145,9 @@ struct LatestMetricsCard: View {
                       label: "Disk Writes",
                       value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB")
             MetricRow(icon: "scroll",
-                      label: "Scroll Hitch",
-                      value: "\(String(format: "%.1f", summary.scrollHitchTimeRatio))%")
+                      label: "Hitch Rate",
+                      value: summary.hitchTimeRatio
+                          .map { "\($0.formatted(.number.precision(.fractionLength(1)))) ms/s" } ?? "n/a")
 
             Text("Time Range: \(summary.timeRange)")
                 .font(.caption)

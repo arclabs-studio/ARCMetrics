@@ -70,8 +70,18 @@ extension MXMetricPayload: MetricPayloadSource {
         diskIOMetrics?.cumulativeLogicalWrites.megabytes
     }
 
+    /// Milliseconds per second. `Measurement<Unit>` with no typed unit, so
+    /// the scale was measured on device: the unit symbol is "ms per s".
     var scrollHitchTimeRatio: Double? {
         animationMetrics?.scrollHitchTimeRatio.value
+    }
+
+    /// Milliseconds per second, across all tracked animations.
+    var hitchTimeRatio: Double? {
+        if #available(iOS 26, visionOS 26, *) {
+            return animationMetrics?.hitchTimeRatio.value
+        }
+        return nil
     }
 }
 

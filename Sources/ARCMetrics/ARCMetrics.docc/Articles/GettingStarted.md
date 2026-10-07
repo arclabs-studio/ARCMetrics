@@ -14,7 +14,7 @@ Add ARCMetrics to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/arclabs-studio/ARCMetrics", from: "1.0.0")
+    .package(url: "https://github.com/arclabs-studio/ARCMetrics", from: "2.0.0")
 ]
 ```
 
@@ -22,17 +22,19 @@ Or in Xcode: **File → Add Package Dependencies** and enter the repository URL.
 
 ## Basic Integration
 
-### Step 1: Start Collecting Metrics
+### Step 1: Create a Collector and Start Collecting
 
-Initialize the MetricKit provider early in your app's lifecycle:
+Create **one** ``MetricsCollector`` early in your app's lifecycle and keep it for the app's lifetime. Apple recommends a single `MetricManager` per app; the collector reads MetricKit once and multicasts to every consumer.
 
 ```swift
 import ARCMetrics
 
 @main
 struct MyApp: App {
+    private let metrics = MetricsCollector()
+
     init() {
-        MetricKitProvider.shared.startCollecting()
+        metrics.startCollecting()
     }
 
     var body: some Scene {
@@ -43,28 +45,43 @@ struct MyApp: App {
 }
 ```
 
-### Step 2: Register Callbacks
+``MetricsCollector/startCollecting()`` is idempotent: a second call while already collecting is ignored.
 
-Set up callbacks to receive metrics when they arrive:
+### Step 2: Consume the Streams
+
+Iterate the streams in a `.task`, which ends the iteration when the view goes away:
 
 ```swift
-// Performance metrics (memory, CPU, launch time, etc.)
-MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in
-    for summary in summaries {
-        // Process each MetricSummary
-        logToAnalytics(summary)
-    }
-}
-
-// Diagnostic events (crashes, hangs)
-MetricKitProvider.shared.onDiagnosticPayloadsReceived = { summaries in
-    for summary in summaries {
-        if summary.crashCount > 0 {
-            alertCrashReporting(summary)
+WindowGroup {
+    ContentView()
+        .task {
+            // Performance metrics (memory, CPU, launch time, etc.)
+            for await summary in metrics.metricSummaries() {
+                await logToAnalytics(summary)
+            }
         }
-    }
+        .task {
+            // Diagnostic events (crashes, hangs)
+            for await summary in metrics.diagnosticSummaries() where summary.crashCount > 0 {
+                await alertCrashReporting(summary)
+            }
+        }
 }
 ```
+
+Every call to ``MetricsCollecting/metricSummaries()`` or ``MetricsCollecting/diagnosticSummaries()`` creates an independent subscriber that receives every summary delivered from then on. Streams don't replay: for summaries delivered earlier, read ``MetricsCollecting/pastMetricSummaries`` and ``MetricsCollecting/pastDiagnosticSummaries``.
+
+> Note: On iOS and macOS 27 the `past…` properties contain only summaries delivered in the current process, because `MetricManager` has no history API. Below 27 they read MetricKit's on-device history.
+
+### Which MetricKit API Is Used
+
+The collector chooses at runtime:
+
+| Platform | Backend |
+|----------|---------|
+| iOS 27, macOS 27 | `MetricManager` (requires building with Xcode 27 / Swift 6.4) |
+| iOS 17–26, visionOS | `MXMetricManager` subscriber |
+| macOS 14–26 | None — logs a warning and delivers nothing |
 
 ## Understanding Delivery Timing
 
@@ -88,93 +105,102 @@ For best results, test on a physical device:
 2. Use the app normally for at least 24 hours
 3. Check for metrics delivery the next day
 
-### In Simulator
+### Simulated Payloads
 
-The Simulator provides limited MetricKit support. Use Xcode's **Debug → Simulate MetricKit Payload** for testing.
+Run your app from Xcode **on a physical device**, then choose **Debug → MetricKit → Simulate MetricKit Payloads**. The menu item does not appear when running on the Simulator. Simulated reports contain sample data, not measurements of your app.
 
 ## Testing with Dependency Injection
 
-ARCMetrics provides the ``MetricsProviding`` protocol for dependency injection, enabling you to write testable code and provide mock data for SwiftUI previews.
+ARCMetrics provides the ``MetricsCollecting`` protocol for dependency injection, and the `ARCMetricsMocks` product provides `MockMetricsCollector` for tests and SwiftUI previews.
 
 ### Using the Protocol
 
-Instead of referencing ``MetricKitProvider`` directly, depend on the protocol:
+Instead of referencing ``MetricsCollector`` directly, depend on the protocol:
 
 ```swift
-class MetricsViewModel: ObservableObject {
-    private let metricsProvider: MetricsProviding
+@MainActor
+@Observable
+final class MetricsViewModel {
+    private(set) var latestMetrics: MetricSummary?
+    private let collector: any MetricsCollecting
 
-    init(metricsProvider: MetricsProviding = MetricKitProvider.shared) {
-        self.metricsProvider = metricsProvider
-        setupCallbacks()
+    init(collector: any MetricsCollecting) {
+        self.collector = collector
+        latestMetrics = collector.pastMetricSummaries.last
     }
 
-    private func setupCallbacks() {
-        metricsProvider.onMetricPayloadsReceived = { [weak self] summaries in
-            // Handle metrics
+    func observeMetrics() async {
+        for await summary in collector.metricSummaries() {
+            latestMetrics = summary
         }
     }
 }
 ```
 
-### Creating a Mock for Tests
+The view starts the subscription with `.task { await viewModel.observeMetrics() }`.
 
-Create a simple mock that conforms to `MetricsProviding`:
+### Adding the Mocks Product
+
+Add `ARCMetricsMocks` to your test target (and to the app target if previews use it):
 
 ```swift
-final class MockMetricsProvider: MetricsProviding, @unchecked Sendable {
-    var onMetricPayloadsReceived: (@Sendable ([MetricSummary]) -> Void)?
-    var onDiagnosticPayloadsReceived: (@Sendable ([DiagnosticSummary]) -> Void)?
-    var pastMetricSummaries: [MetricSummary] = []
-    var pastDiagnosticSummaries: [DiagnosticSummary] = []
-
-    func startCollecting() { }
-    func stopCollecting() { }
-
-    // Test helper
-    func simulateMetricPayload(_ summary: MetricSummary) {
-        pastMetricSummaries.append(summary)
-        onMetricPayloadsReceived?([summary])
-    }
-}
+.testTarget(
+    name: "YourAppTests",
+    dependencies: [
+        .product(name: "ARCMetrics", package: "ARCMetrics"),
+        .product(name: "ARCMetricsMocks", package: "ARCMetrics")
+    ]
+)
 ```
 
 ### Using Mocks in SwiftUI Previews
 
 ```swift
 #Preview {
-    let mock = MockMetricsProvider()
-
-    // Create sample data
     var summary = MetricSummary(timeRange: "Preview Data")
     summary.peakMemoryUsageMB = 150.0
-    summary.averageCPUPercentage = 25.0
+    summary.cumulativeCPUTimeSeconds = 30.0
+    summary.foregroundTimeSeconds = 120.0
     summary.cumulativeGPUTimeSeconds = 5.0
-    summary.scrollHitchTimeRatio = 2.5
+    summary.hitchTimeRatio = 2.5
 
-    mock.pastMetricSummaries = [summary]
-
-    return MetricsView(viewModel: MetricsViewModel(metricsProvider: mock))
+    let mock = MockMetricsCollector(pastMetricSummaries: [summary])
+    return MetricsView(viewModel: MetricsViewModel(collector: mock))
 }
 ```
+
+`averageCPUPercentage` is computed from `cumulativeCPUTimeSeconds` and `foregroundTimeSeconds`, so set those instead.
 
 ### Writing Unit Tests
 
+`MockMetricsCollector` delivers only what you simulate, to every current subscriber. Streams don't replay, so subscribe before you simulate:
+
 ```swift
-func testMetricCallback() {
-    let mock = MockMetricsProvider()
-    let viewModel = MetricsViewModel(metricsProvider: mock)
+import ARCMetrics
+import ARCMetricsMocks
+import Testing
+
+@Test func simulatedMetricIsDelivered() async {
+    // Given
+    let collector = MockMetricsCollector()
+    let metrics = collector.metricSummaries()
     var summary = MetricSummary(timeRange: "Test")
     summary.peakMemoryUsageMB = 100.0
 
-    mock.simulateMetricPayload(summary)
+    // When
+    collector.simulate(metric: summary)
 
-    XCTAssertEqual(viewModel.latestMetrics?.peakMemoryUsageMB, 100.0)
+    // Then
+    var iterator = metrics.makeAsyncIterator()
+    #expect(await iterator.next()?.peakMemoryUsageMB == 100.0)
 }
 ```
+
+Assert on start/stop with `startCollectingCallCount` and `stopCollectingCallCount`. Unlike the real collector, the mock counts every call, including duplicates.
 
 ## Next Steps
 
 - Learn about the data you receive in <doc:UnderstandingMetrics>
+- Upgrading from 1.x? Read <doc:MigratingToV2>
 - Correlate metrics with Instruments in <doc:InstrumentsIntegration>
 - Troubleshoot common issues in <doc:Troubleshooting>

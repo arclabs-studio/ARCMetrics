@@ -223,8 +223,9 @@ struct MetricDetailView: View {
             }
 
             Section("Animation") {
-                DetailRow(label: "Scroll Hitch Ratio",
-                          value: "\(String(format: "%.2f", summary.scrollHitchTimeRatio))%")
+                DetailRow(label: "Hitch Rate",
+                          value: summary.hitchTimeRatio
+                              .map { "\($0.formatted(.number.precision(.fractionLength(2)))) ms/s" } ?? "n/a")
             }
 
             Section("Responsiveness") {

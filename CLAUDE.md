@@ -18,38 +18,80 @@ swift test --filter ARCMetricsTests
 swift package generate-documentation
 ```
 
+**Known toolchain warning (Xcode 27, 2026-10-06):** linking the test bundle for an iOS
+simulator emits `Using sysroot for 'macOS 27.0' but targeting
+'arm64-apple-ios17.0.0-simulator' [-Wincompatible-sysroot]`. It reproduces in a fresh
+trivial package, is not caused by this package, and has no `Package.swift` lever. The
+library builds themselves (iOS, macOS, visionOS) are warning-free — check those.
+
+**The `MetricManager` path (iOS/macOS 27) compiles only with Swift 6.4+** (`#if compiler(>=6.4)`),
+so `swift test` on an older Xcode exercises the legacy path only. Real MetricKit payloads for
+the fixtures come from Xcode → Debug → MetricKit → Simulate MetricKit Payloads, which exists
+only when running on a **physical device**.
+
 ## Package Overview
 
-ARCMetrics is a Swift package providing native MetricKit integration for collecting production performance metrics. It wraps Apple's MetricKit framework to deliver simplified `MetricSummary` and `DiagnosticSummary` models via callbacks.
+ARCMetrics is a Swift package providing native MetricKit integration for collecting production performance metrics. It wraps Apple's MetricKit framework to deliver simplified `MetricSummary` and `DiagnosticSummary` models through `AsyncStream`s.
 
-**Platforms:** iOS 17+, visionOS 1+ (MetricKit is not available on macOS/watchOS/tvOS)
-**Swift:** 6.0
-**Dependencies:** ARCLogger (local sibling package at `../ARCLogger`)
+**Platforms:** iOS 17+, macOS 14+, visionOS 1+ (macOS before 27 has no MetricKit backend: the collector logs a warning and delivers nothing)
+**Swift:** 6.0 tools; the iOS/macOS 27 `MetricManager` code compiles only with Swift 6.4 (Xcode 27), gated by `#if compiler(>=6.4)`
+**Dependencies:** ARCLogger (remote, `https://github.com/arclabs-studio/ARCLogger.git`, from 1.0.0)
+**Products:** `ARCMetrics`, `ARCMetricsMocks` (test doubles)
 
 ## Package Architecture
 
 ```
 Sources/ARCMetrics/
-├── MetricKitProvider.swift      # Singleton, subscribes to MXMetricManager
-├── MetricKitPayloadProcessor.swift  # Transforms MX payloads → summary models
+├── MetricsCollector.swift           # Public collector: start/stop state, multicast streams
+├── MetricKitPayloadProcessor.swift  # Transforms payload sources → summary models
+├── Internal/
+│   ├── DefaultMetricsBackend.swift  # Picks the backend at runtime
+│   ├── MetricManagerBackend.swift   # iOS/macOS 27: MetricManager report sequences
+│   ├── LegacyMXBackend.swift        # iOS < 27 + visionOS: MXMetricManager subscriber
+│   ├── MetricsBackend.swift         # Backend protocol + MetricsDelivery
+│   ├── UnavailableMetricsBackend.swift  # macOS < 27: logs a warning, delivers nothing
+│   ├── MetricReportStreams.swift    # Seam over MetricManager's report sequences (fixtures in tests)
+│   ├── SummaryCache.swift           # Per-interval memo for the MXMetricManager backend
+│   ├── SummaryBroadcaster.swift     # `package` AsyncStream fan-out (shared with the mocks)
+│   ├── MetricsLogger.swift          # `Logger` alias: iOS 27's MetricKit re-exports `os`
+│   ├── PayloadSources.swift         # Platform-free payload protocols (the test seam)
+│   ├── MetricKitPayloadAdapters.swift  # MXMetricPayload / MXDiagnosticPayload conformances
+│   └── MetricReportAdapters.swift   # MetricReport / DiagnosticReport conformances
 ├── Models/
-│   ├── MetricSummary.swift      # Performance metrics (memory, CPU, hangs, launch)
-│   └── DiagnosticSummary.swift  # Crash/hang diagnostics with nested CrashInfo/HangInfo
+│   ├── MetricSummary.swift          # Performance metrics (memory, CPU, hangs, launch, hitches)
+│   └── DiagnosticSummary.swift      # Crash/hang diagnostics with nested CrashInfo/HangInfo
 ├── Protocols/
-│   └── MetricsProviding.swift   # Protocol for metrics provider
-└── Documentation.docc/          # DocC documentation
+│   └── MetricsCollecting.swift      # Protocol for metrics collectors
+├── Signposts/                       # SignpostTracing, MetricKitSignpostTracer, SignpostCategory, SignpostInterval
+└── ARCMetrics.docc/                 # DocC documentation
+Sources/ARCMetricsMocks/
+├── MockMetricsCollector.swift       # MetricsCollecting double: simulate(metric:) / simulate(diagnostic:)
+└── RecordingSignpostTracer.swift    # SignpostTracing double that records events
 ```
 
 **Key types:**
-- `MetricKitProvider.shared` - Singleton that calls `MXMetricManager.shared.add(self)` to subscribe
-- `MetricKitPayloadProcessor` - Internal processor converting `MXMetricPayload`/`MXDiagnosticPayload` to summaries
-- `MetricSummary` / `DiagnosticSummary` - Public `Sendable` structs for app consumption
+- `MetricsCollector` - Public `MetricsCollecting` implementation. No singleton: the app creates ONE and keeps it (Apple: share one `MetricManager`; two iterators of the same sequence each get a random subset). Backend chosen at runtime:
+  - iOS/macOS 27 → `MetricManagerBackend` (`MetricManager.metricReports` / `diagnosticReports`)
+  - iOS < 27 and all visionOS → `LegacyMXBackend` (`MXMetricManager` subscriber, to-be-deprecated but warning-free at our targets)
+  - macOS < 27 → `UnavailableMetricsBackend` (logs a warning)
+- `MetricsCollecting` - Protocol: `metricSummaries()` / `diagnosticSummaries()` return a new multicast `AsyncStream` per call (no replay), plus `startCollecting()`, `stopCollecting()`, `isCollecting`, `pastMetricSummaries`, `pastDiagnosticSummaries`. On iOS/macOS 27 the `past…` properties hold only the current process's summaries (`MetricManager` has no history API).
+- `MetricKitPayloadProcessor` - Internal processor converting payload sources (MX payloads or 27's reports) to summaries
+- `MetricSummary` / `DiagnosticSummary` - Public `Sendable`, `Codable` structs for app consumption. `hitchTimeRatio` and `scrollHitchTimeRatio` are `Double?` in ms per second (1.x's `scrollHitchTimeRatio` was ×100 — a bug).
+- `MetricKitSignpostTracer` - Emits via `mxSignpost` on `MetricManager.logHandle(category:)` (iOS/macOS 27) or `MXMetricManager.makeLogHandle(category:)` (below 27, visionOS)
 
 **Usage pattern:**
 ```swift
-MetricKitProvider.shared.onMetricPayloadsReceived = { summaries in ... }
-MetricKitProvider.shared.startCollecting()
+let collector = MetricsCollector()
+collector.startCollecting()
+
+Task {
+    for await summary in collector.metricSummaries() { ... }
+}
 ```
+
+**Concurrency:** everything is checked `Sendable` (`OSAllocatedUnfairLock` for mutable state). Never add `@unchecked Sendable`.
+
+**Stream lifetime:** streams finish when the collector is released (`deinit` finishes both broadcasters). Without that, `for await` loops over a released collector would suspend forever.
 
 ## Example App
 
@@ -149,20 +191,21 @@ The Xcode apps and packages follow MVVM+C architecture with SwiftUI, Clean Code,
 
 ## Key Architectural Patterns
 
-1. **Feature-based organization**: Each feature (Home, Scanner, Details, Generator, etc.) has its own folder.
-2. **Dependency injection**: Using `@EnvironmentObject` for shared state (e.g., `NetworkingManager`).
-3. **Reactive updates**: Combine framework with `@Published` properties.
-4. **Data persistence**: Swift Data for local storage, CloudKit for cloud sync.
+1. **Protocol seams**: consumers depend on `MetricsCollecting` / `SignpostTracing`; tests use `ARCMetricsMocks`.
+2. **One MetricKit reader per collector**: a single `MetricManager` (or `MXMetricManager` subscription), multicast through `SummaryBroadcaster`.
+3. **Runtime backend selection**: `makeDefaultBackend` picks the API generation; tests inject a fake `MetricsBackend` or `MetricReportStreams`.
+4. **Checked `Sendable`**: mutable state behind `OSAllocatedUnfairLock`, never `@unchecked Sendable`.
 
 ---
 
 # Testing Strategy
 
-Tests are in `Tests/ARCMetricsTests/` using XCTest. When adding tests:
+Tests are in `Tests/ARCMetricsTests/`. New tests use Swift Testing (`@Suite`, `@Test`, `#expect`); a few older XCTest files remain. When adding tests:
 
-- Use XCTest framework (not Swift Testing)
-- Start every test with tested method followed by '_' and the test description (e.g., `func testProviderSingleton()`).
+- Use Swift Testing (not XCTest)
 - Add Suite and Tests explicit descriptions
+- Test `MetricsCollector` through the internal `init(logger:backend:)` seam with a fake backend; `MetricManagerBackend` through `MetricReportStreams` with decoded report fixtures (`FakeReportStreams`); payload processing through `MetricPayloadSource` / `DiagnosticPayloadSource` stubs
+- Bound every wait on a stream: suites that iterate `AsyncStream`s carry `.timeLimit(.minutes(1))`
 - Test ViewModels and UseCases independently
 - Focus on business logic over UI
 

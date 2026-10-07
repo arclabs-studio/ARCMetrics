@@ -113,9 +113,9 @@ Common disk write offenders:
 - Cache writes without debouncing
 - Analytics events written synchronously
 
-### Scroll Hitch Investigation
+### Hitch Investigation
 
-When ``MetricSummary/scrollHitchTimeRatio`` > 5%:
+When ``MetricSummary/hitchTimeRatio`` (or ``MetricSummary/scrollHitchTimeRatio``) is above 5 ms/s:
 
 1. Open **Instruments** → **Animation Hitches**
 2. Record while scrolling through your app
@@ -123,7 +123,7 @@ When ``MetricSummary/scrollHitchTimeRatio`` > 5%:
 4. Identify commit, render, and display phase delays
 
 ```
-MetricKit: Scroll Hitch Ratio = 12%
+MetricKit: Hitch Time Ratio = 12 ms/s
 Instruments: Commit phase taking 45ms during cell appearance
 Solution: Pre-calculate cell heights, load images asynchronously
 ```
@@ -141,10 +141,11 @@ Alternative: Use **Core Animation** instrument with:
 
 Xcode provides built-in MetricKit simulation:
 
-1. Run your app on a connected device
-2. Go to **Debug** → **Simulate MetricKit Payload**
-3. Choose the payload type to simulate
-4. Your app's callbacks will receive test data
+1. Run your app on a connected physical device — the menu item does not appear when running on the Simulator
+2. Go to **Debug** → **MetricKit** → **Simulate MetricKit Payloads**
+3. Your `metricSummaries()` / `diagnosticSummaries()` streams receive the simulated reports
+
+Simulated reports contain sample data, not measurements of your app.
 
 ### Using the Organizer
 

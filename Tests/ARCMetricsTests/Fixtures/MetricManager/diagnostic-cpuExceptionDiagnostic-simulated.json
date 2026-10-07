@@ -1,0 +1,166 @@
+{
+  "cpuExceptionDiagnostic" : {
+    "callStackTree" : {
+      "binaryInfo" : [
+        {
+          "name" : "testBinaryName",
+          "uuid" : "3902B0A0-F127-4751-BCCC-96E458583E88"
+        },
+        {
+          "name" : "testBinaryName3",
+          "uuid" : "43787EDA-EFDD-40F1-9295-D8FA3533041F"
+        },
+        {
+          "name" : "testBinaryName2",
+          "uuid" : "592E82B1-8CB0-4E30-A990-4B287F3E6F35"
+        },
+        {
+          "name" : "testBinaryName",
+          "uuid" : "5AC1110B-D9E6-4F28-8ADD-10A7E9807401"
+        },
+        {
+          "name" : "testBinaryName1",
+          "uuid" : "9A4AC0DB-0BAF-4C47-A005-B08B263C452C"
+        },
+        {
+          "name" : "testBinaryName",
+          "uuid" : "E26D2321-2742-421B-98FA-38A386E51F3F"
+        },
+        {
+          "name" : "testBinaryName4",
+          "uuid" : "F2B22892-03EC-4037-B909-B29E86EB98F9"
+        }
+      ],
+      "callStackPerThread" : false,
+      "callStackThreads" : [
+        {
+          "rootFrames" : [
+            {
+              "address" : 4294971392,
+              "binaryUUID" : "5AC1110B-D9E6-4F28-8ADD-10A7E9807401",
+              "offsetIntoBinaryTextSegment" : 4096,
+              "sampleCount" : 15,
+              "subFrames" : [
+
+              ]
+            },
+            {
+              "address" : 7078064128,
+              "binaryUUID" : "9A4AC0DB-0BAF-4C47-A005-B08B263C452C",
+              "offsetIntoBinaryTextSegment" : 176128,
+              "sampleCount" : 12,
+              "subFrames" : [
+
+              ]
+            }
+          ]
+        },
+        {
+          "rootFrames" : [
+            {
+              "address" : 7043604480,
+              "binaryUUID" : "592E82B1-8CB0-4E30-A990-4B287F3E6F35",
+              "offsetIntoBinaryTextSegment" : 319488,
+              "sampleCount" : 10,
+              "subFrames" : [
+
+              ]
+            },
+            {
+              "address" : 4294980864,
+              "binaryUUID" : "3902B0A0-F127-4751-BCCC-96E458583E88",
+              "offsetIntoBinaryTextSegment" : 13568,
+              "sampleCount" : 7,
+              "subFrames" : [
+
+              ]
+            },
+            {
+              "address" : 7096279040,
+              "binaryUUID" : "43787EDA-EFDD-40F1-9295-D8FA3533041F",
+              "offsetIntoBinaryTextSegment" : 565248,
+              "sampleCount" : 5,
+              "subFrames" : [
+
+              ]
+            }
+          ]
+        },
+        {
+          "rootFrames" : [
+            {
+              "address" : 7108476928,
+              "binaryUUID" : "F2B22892-03EC-4037-B909-B29E86EB98F9",
+              "offsetIntoBinaryTextSegment" : 180224,
+              "sampleCount" : 6,
+              "subFrames" : [
+
+              ]
+            },
+            {
+              "address" : 4294988288,
+              "binaryUUID" : "E26D2321-2742-421B-98FA-38A386E51F3F",
+              "offsetIntoBinaryTextSegment" : 20992,
+              "sampleCount" : 4,
+              "subFrames" : [
+
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "totalCPUTime" : {
+      "unit" : "s",
+      "value" : 20
+    },
+    "totalSampledTime" : {
+      "unit" : "s",
+      "value" : 20
+    }
+  },
+  "environment" : {
+    "applicationBuildVersion" : "1.0",
+    "applicationVersion" : "1.0.0",
+    "bundleIdentifier" : "com.arclabsstudio.arcmetrics.example",
+    "deviceType" : "iPhone17,3",
+    "isTestFlightApp" : false,
+    "lowPowerModeEnabled" : true,
+    "osVersion" : {
+      "buildNumber" : "24A437",
+      "number" : "27.0",
+      "platform" : "iPhone OS"
+    },
+    "pid" : 123,
+    "platformArchitecture" : "arm64e",
+    "regionFormat" : "ES",
+    "signpostData" : [
+      {
+        "category" : "testEventCategory",
+        "interval" : {
+          "begin" : 813012100.26857,
+          "end" : 813012100.26857
+        },
+        "name" : "testEventName",
+        "subsystem" : "testEventSubsystem"
+      },
+      {
+        "category" : "testIntervalCategory",
+        "interval" : {
+          "begin" : 813012095.26857,
+          "end" : 813012100.26857
+        },
+        "name" : "testIntervalName",
+        "subsystem" : "testIntervalSubsystem"
+      }
+    ],
+    "states" : [
+
+    ]
+  },
+  "timeRange" : {
+    "begin" : 813012100.268845,
+    "end" : 813012100.268845
+  },
+  "version" : "2.0.0"
+}

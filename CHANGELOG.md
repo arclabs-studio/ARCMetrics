@@ -5,6 +5,45 @@ All notable changes to ARCMetrics will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-10-07
+
+ARCMetrics 2.0 moves to Apple's iOS / macOS 27 `MetricManager` API and replaces the callback singleton with an owned collector that publishes `AsyncStream`s. Step-by-step upgrade guide: [Migrating to ARCMetrics 2.0](Sources/ARCMetrics/ARCMetrics.docc/Articles/MigratingToV2.md).
+
+### Breaking Changes
+
+- **Removed `MetricKitProvider`**, including `MetricKitProvider.shared`, `configure(logger:)`, and the `onMetricPayloadsReceived` / `onDiagnosticPayloadsReceived` callbacks. Use `MetricsCollector`.
+- **Removed the `MetricsProviding` protocol.** Use `MetricsCollecting`.
+- **No singleton.** The app creates one `MetricsCollector` and keeps it for its lifetime. Apple recommends a single `MetricManager`; two iterators of the same report sequence each receive a non-deterministic subset of reports.
+- **`MetricSummary.scrollHitchTimeRatio` is now `Double?` in milliseconds per second** (was `Double = 0`, documented as a percentage). It is `nil` on iOS and macOS 27, where `MetricManager` has no scroll-only metric — read `hitchTimeRatio` there.
+- **`MockMetricsProvider` is gone.** The test double now ships as `MockMetricsCollector` in the new `ARCMetricsMocks` product.
+- **Streams finish when their collector is released.** Keep the `MetricsCollector` (or `MockMetricsCollector`) alive for as long as you read from it; a `for await` loop over a released collector now ends instead of suspending forever.
+
+### Added
+
+- **`MetricsCollecting`** — `Sendable` protocol with `metricSummaries() -> AsyncStream<MetricSummary>`, `diagnosticSummaries() -> AsyncStream<DiagnosticSummary>`, `startCollecting()`, `stopCollecting()`, `isCollecting`, `pastMetricSummaries`, and `pastDiagnosticSummaries`. Every stream call is an independent subscriber that receives every summary delivered afterwards (multicast, no replay). In 1.x a second consumer assigning the callback silently replaced the first.
+- **`MetricsCollector`** — the production `MetricsCollecting`, created with `init(logger:)` (defaults to `ARCLogger(category: "MetricKit")`). The MetricKit backend is chosen at runtime:
+  - iOS 27 / macOS 27: Apple's `MetricManager` (`metricReports` / `diagnosticReports` async sequences). Compiled only with the Swift 6.4 toolchain (Xcode 27), via `#if compiler(>=6.4)`, because older SDKs do not contain it.
+  - iOS below 27 and all visionOS: the `MXMetricManager` subscriber. Apple marks it to-be-deprecated; it still works and raises no warning at this package's deployment targets.
+  - macOS below 27: no-op that logs a warning, as in 1.x.
+- **`MetricSummary.hitchTimeRatio`** (`Double?`) — hitch time across all tracked animations, in milliseconds per second, perception-adjusted by Apple. Filled from `MetricManager`'s hitch-time metric on 27 and from `MXAnimationMetric.hitchTimeRatio` on the iOS / visionOS 26 legacy path. Apple's targets: under 5 ms/s good, 5–10 ms/s noticeable, above 10 ms/s investigate.
+- **`ARCMetricsMocks` product**:
+  - `MockMetricsCollector` — `simulate(metric:)`, `simulate(diagnostic:)`, `startCollectingCallCount`, `stopCollectingCallCount`, `init(pastMetricSummaries:pastDiagnosticSummaries:)`. Simulated summaries reach every current subscriber.
+  - `RecordingSignpostTracer` — records `events` (`.emitted` / `.began` / `.ended`) and exposes `beginCount`, `endCount`, and `openedIDs`.
+
+### Changed
+
+- **Diagnostics on iOS / macOS 27**: each `DiagnosticReport` is one event and becomes one `DiagnosticSummary` holding one crash, one hang, or one CPU / disk-write exception. App-launch and memory-exception diagnostics produce no summary — `DiagnosticSummary` has no field for them.
+- **`pastMetricSummaries` / `pastDiagnosticSummaries` on iOS / macOS 27** contain only summaries delivered in the current process: `MetricManager` has no history API. Below 27 they still read MetricKit's on-device history (`pastPayloads`).
+- **Signposts** — `SignpostTracing`, `MetricKitSignpostTracer`, `SignpostCategory`, `SignpostInterval`, and `NoOpSignpostTracer` keep their API. The log handle now comes from `MetricManager.logHandle(category:)` on iOS / macOS 27 (`MXMetricManager.makeLogHandle(category:)` below 27 and on visionOS), and macOS 27 now emits through `mxSignpost` too. `mxSignpost` itself is not deprecated.
+- **Concurrency** — every type is checked `Sendable`. 1.x had two `@unchecked Sendable` conformances; 2.0 has none.
+- `MetricSummary` and `DiagnosticSummary` remain `Codable`; JSON written by 1.x decodes unchanged, with missing hitch fields decoding as `nil`.
+
+### Fixed
+
+- **`scrollHitchTimeRatio` was 100× too large.** 1.x multiplied MetricKit's value by 100, assuming a `0...1` ratio. MetricKit reports milliseconds per second (unit symbol measured on an iOS 27 device, 2026-10-06). 2.0 stores the value as reported. Summaries persisted by 1.x decode unchanged and are therefore still 100× too large.
+- **1.x did not compile against the iOS 27 SDK.** From that SDK `import MetricKit` re-exports `os`, which made `Logger` ambiguous with ARCLogger's.
+- **`hitchTimeRatio` on iOS / macOS 27 is converted to `HitchTimeRatio`'s base unit** (ms per second, per Apple's documentation) instead of trusting the encoded unit.
+
 ## [1.0.0] - 2026-08-21
 
 First public release of **ARCMetrics**.
