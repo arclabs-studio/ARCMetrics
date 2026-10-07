@@ -15,9 +15,11 @@ import MetricKit
 
 /// Reads the full-day aggregate of a `MetricReport`.
 ///
-/// Verified against real reports captured on an iOS 27 device (the fixtures in
-/// the test target). Units are converted here, so the processor sees the same
-/// MB / seconds / ms-per-second values from both backends.
+/// Checked against real reports captured on an iOS 27 device (the fixtures in
+/// the test target), except the overall hitch entry, which those captures did
+/// not contain: its unit comes from Apple's `HitchTimeRatio` documentation.
+/// Units are converted here, so the processor sees the same MB / seconds /
+/// ms-per-second values from both backends.
 @available(iOS 27, macOS 27, *) extension MetricReport: MetricPayloadSource {
     var interval: DateInterval {
         timeRange
@@ -143,11 +145,14 @@ import MetricKit
         nil
     }
 
-    /// All tracked animations, in ms per second (`HitchTimeRatio`'s base unit).
+    /// All tracked animations, in ms per second.
+    ///
+    /// Apple documents `HitchTimeRatio`'s base unit as `"ms per s"`; converting
+    /// to it explicitly keeps that true whatever unit a report is encoded in.
     var hitchTimeRatio: Double? {
         firstValue { result in
             guard case let .hitchTime(metric) = result else { return nil }
-            return metric.ratio.value
+            return metric.ratio.converted(to: .baseUnit()).value
         }
     }
 
