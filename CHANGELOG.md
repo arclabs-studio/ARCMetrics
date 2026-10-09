@@ -5,6 +5,17 @@ All notable changes to ARCMetrics will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`Tracing`** — `Sendable` protocol for spans and events that carry attributes, parent links and outcomes: `start(_:attributes:)`, `end(_:outcome:attributes:)`, `event(_:category:attributes:)`. Helpers `begin(_:category:parent:attributes:) -> TraceSpan`, and sync and async `trace(_:category:parent:attributes:operation:)`; the async one inherits the caller's isolation and returns `sending T`. A throwing operation ends its span with `.error(type:)`, the error's type name only — never its message.
+- **`TraceSpan`** (random non-zero `id` that doubles as the `OSSignpostID`, `name`, `category`, `parentID`, `startTime`), **`TraceOutcome`** (`.ok`, `.error(type:)`), **`TraceAttributeValue`** (string, int, double, bool, with literal conformances) and **`TraceAttributes`**.
+- **`TeeTracer`** forwards every call, in order, to several tracers with the same span token. **`NoOpTracer`** records nothing.
+- **`MetricKitSignpostTracer` conforms to `Tracing`**: spans become signpost intervals keyed by the span `id`; attributes, parents and outcomes are ignored. `SignpostTracing` is unchanged.
+- **`RecordingTracer`** in `ARCMetricsMocks`.
+- DocC article *Tracing with Attributes*.
+
 ## [2.0.0] - 2026-10-07
 
 ARCMetrics 2.0 moves to Apple's iOS / macOS 27 `MetricManager` API and replaces the callback singleton with an owned collector that publishes `AsyncStream`s. Step-by-step upgrade guide: [Migrating to ARCMetrics 2.0](Sources/ARCMetrics/ARCMetrics.docc/Articles/MigratingToV2.md).
