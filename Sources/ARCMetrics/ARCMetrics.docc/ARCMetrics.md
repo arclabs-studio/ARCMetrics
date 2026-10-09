@@ -18,9 +18,10 @@ MetricKit delivers aggregated reports approximately every 24 hours containing me
 - **Comprehensive Metrics**: Memory, CPU, GPU, launch time, hangs, disk I/O, animation hitches, and network usage
 - **Diagnostic Reports**: Crash and hang information with detailed context
 - **Signpost Tracing**: Measure your own code with ``MetricKitSignpostTracer``, aggregated by MetricKit and visible in Instruments
+- **Tracing with Attributes**: ``Tracing`` adds attributes, parent links and outcomes; ``TeeTracer`` feeds MetricKit and another backend, such as ARCMetricsOTel, with the same spans
 - **Privacy-Preserving**: No personally identifiable information collected
 - **Production-Ready**: Designed for real-world app monitoring
-- **Testable**: Inject the ``MetricsCollecting`` protocol; the `ARCMetricsMocks` product provides `MockMetricsCollector` and `RecordingSignpostTracer`
+- **Testable**: Inject the ``MetricsCollecting`` protocol; the `ARCMetricsMocks` product provides `MockMetricsCollector`, `RecordingSignpostTracer` and `RecordingTracer`
 
 ### Quick Start
 
@@ -83,6 +84,17 @@ struct MyApp: App {
 - ``SignpostCategory``
 - ``SignpostInterval``
 - ``NoOpSignpostTracer``
+
+### Tracing with Attributes
+
+- <doc:TracingWithAttributes>
+- ``Tracing``
+- ``TraceSpan``
+- ``TraceOutcome``
+- ``TraceAttributeValue``
+- ``TraceAttributes``
+- ``TeeTracer``
+- ``NoOpTracer``
 
 ### Architecture
 
