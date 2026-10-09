@@ -166,5 +166,6 @@ Everything below predates the 1.0.0 baseline. The version numbers are retained f
 
 ---
 
+[2.1.0]: https://github.com/arclabs-studio/ARCMetrics/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/arclabs-studio/ARCMetrics/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/arclabs-studio/ARCMetrics/releases/tag/v1.0.0
