@@ -50,7 +50,7 @@ Part of the ARC Labs Studio package ecosystem.
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/arclabs-studio/ARCMetrics.git", from: "2.0.0")
+    .package(url: "https://github.com/arclabs-studio/ARCMetrics.git", from: "2.1.0")
 ]
 ```
 
@@ -81,7 +81,7 @@ For tests, also add the mocks product:
 
 1. **File → Add Package Dependencies**
 2. Enter: `https://github.com/arclabs-studio/ARCMetrics`
-3. Select version: `2.0.0` or later
+3. Select version: `2.1.0` or later
 4. Add `ARCMetrics` to your target (and `ARCMetricsMocks` to your test target)
 
 ---

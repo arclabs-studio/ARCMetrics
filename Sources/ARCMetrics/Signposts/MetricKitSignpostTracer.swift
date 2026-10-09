@@ -115,6 +115,8 @@ public struct MetricKitSignpostTracer: SignpostTracing {
 
     private let isEnabled: Bool
     private let cache: HandleCache
+    /// Sees every ``Tracing`` signpost after it is emitted. Test seam; `nil` in production.
+    private let emissionObserver: (@Sendable (SignpostEmission) -> Void)?
 
     // MARK: - Initialization
 
@@ -128,8 +130,16 @@ public struct MetricKitSignpostTracer: SignpostTracing {
     ///     spans emitted elsewhere; this exists only if the MetricKit handle
     ///     proves impossible to filter in Instruments.
     public init(isEnabled: Bool = true, mirrorSubsystem: String? = nil) {
+        self.init(isEnabled: isEnabled, mirrorSubsystem: mirrorSubsystem, emissionObserver: nil)
+    }
+
+    /// Creates a tracer that reports each ``Tracing`` signpost to `emissionObserver`.
+    init(isEnabled: Bool = true,
+         mirrorSubsystem: String? = nil,
+         emissionObserver: (@Sendable (SignpostEmission) -> Void)?) {
         self.isEnabled = isEnabled
         cache = HandleCache(mirrorSubsystem: mirrorSubsystem)
+        self.emissionObserver = emissionObserver
     }
 
     // MARK: - SignpostTracing
@@ -177,5 +187,40 @@ extension MetricKitSignpostTracer {
         }
         #endif
         os_signpost(type, log: handle.log, name: name, signpostID: id)
+    }
+}
+
+// MARK: - Tracing
+
+/// Spans become signpost intervals whose `OSSignpostID` is the span's ``TraceSpan/id``, so a
+/// ``TeeTracer`` that also feeds another backend keeps both sides correlated. Attributes, parents
+/// and outcomes are dropped: `mxSignpost` cannot carry them.
+extension MetricKitSignpostTracer: Tracing {
+    public func start(_ span: TraceSpan, attributes _: TraceAttributes) {
+        signpostIfEnabled(.begin, name: span.name, category: span.category, id: span.id)
+    }
+
+    public func end(_ span: TraceSpan, outcome _: TraceOutcome, attributes _: TraceAttributes) {
+        signpostIfEnabled(.end, name: span.name, category: span.category, id: span.id)
+    }
+
+    public func event(_ name: StaticString, category: SignpostCategory, attributes _: TraceAttributes) {
+        signpostIfEnabled(.event, name: name, category: category, id: .random(in: 1 ..< .max))
+    }
+}
+
+extension MetricKitSignpostTracer {
+    private func signpostIfEnabled(_ kind: SignpostEmission.Kind, name: StaticString, category: SignpostCategory,
+                                   id: UInt64) {
+        guard isEnabled else { return }
+        let handle = cache.handle(for: category)
+        guard handle.log.signpostsEnabled else { return }
+        let type: OSSignpostType = switch kind {
+        case .begin: .begin
+        case .end: .end
+        case .event: .event
+        }
+        Self.signpost(type, on: handle, name: name, id: OSSignpostID(id))
+        emissionObserver?(SignpostEmission(kind: kind, name: "\(name)", category: category, id: id))
     }
 }
