@@ -6,7 +6,10 @@
 //
 
 import ARCMetrics
+import os
 import SwiftUI
+
+private let logger = Logger(subsystem: "com.arclabs.ARCMetrics.ExampleApp", category: "Metrics")
 
 @Observable @MainActor
 // swiftlint:disable:next observable_viewmodel
@@ -17,7 +20,19 @@ final class MetricsViewModel {
 
     var metricSummaries: [MetricSummary] = []
     var diagnosticSummaries: [DiagnosticSummary] = []
-    var isCollecting = true
+    var isCollecting = true {
+        didSet {
+            guard isCollecting != oldValue else { return }
+            if isCollecting {
+                collector.startCollecting()
+                logger.info("MetricKit collection started")
+            } else {
+                collector.stopCollecting()
+                logger.info("MetricKit collection stopped")
+            }
+        }
+    }
+
     var lastUpdateTime: Date?
     var showingAlert = false
     var alertMessage: String = ""
@@ -59,22 +74,11 @@ final class MetricsViewModel {
         _ = await (metrics, diagnostics)
     }
 
-    func toggleCollection() {
-        if isCollecting {
-            collector.stopCollecting()
-            print("MetricKit collection stopped")
-        } else {
-            collector.startCollecting()
-            print("MetricKit collection started")
-        }
-        isCollecting.toggle()
-    }
-
     func clearAllMetrics() {
         metricSummaries.removeAll()
         diagnosticSummaries.removeAll()
         lastUpdateTime = nil
-        print("All metrics cleared")
+        logger.info("All metrics cleared")
     }
 
     func exportMetrics() -> String {
@@ -102,7 +106,7 @@ final class MetricsViewModel {
 extension MetricsViewModel {
     private func receiveMetricSummaries() async {
         for await summary in collector.metricSummaries() {
-            print("Received a metric summary")
+            logger.info("Received a metric summary")
 
             metricSummaries.append(summary)
             lastUpdateTime = Date()
@@ -117,7 +121,7 @@ extension MetricsViewModel {
 
     private func receiveDiagnosticSummaries() async {
         for await summary in collector.diagnosticSummaries() {
-            print("Received a diagnostic summary")
+            logger.info("Received a diagnostic summary")
 
             diagnosticSummaries.append(summary)
             lastUpdateTime = Date()
@@ -137,22 +141,22 @@ extension MetricsViewModel {
     }
 
     private func logMetricSummary(_ summary: MetricSummary) {
-        print("""
+        logger.info("""
         Metric Summary:
         - Time Range: \(summary.timeRange)
-        - Peak Memory: \(String(format: "%.1f", summary.peakMemoryUsageMB)) MB
-        - Avg CPU: \(String(format: "%.1f", summary.averageCPUPercentage))%
-        - GPU Time: \(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s
-        - Disk Writes: \(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB
+        - Peak Memory: \(summary.peakMemoryUsageMB.fixed(1)) MB
+        - Avg CPU: \(summary.averageCPUPercentage.fixed(1))%
+        - GPU Time: \(summary.cumulativeGPUTimeSeconds.fixed(2))s
+        - Disk Writes: \(summary.cumulativeDiskWritesMB.fixed(1)) MB
         - Hitch Rate: \(summary.hitchTimeRatio
             .map { "\($0.formatted(.number.precision(.fractionLength(1)))) ms/s" } ?? "n/a")
-        - Hang Time: \(String(format: "%.2f", summary.totalHangTimeSeconds))s
-        - Launch Time: \(String(format: "%.2f", summary.averageLaunchTimeSeconds))s
+        - Hang Time: \(summary.totalHangTimeSeconds.fixed(2))s
+        - Launch Time: \(summary.averageLaunchTimeSeconds.fixed(2))s
         """)
     }
 
     private func logDiagnosticSummary(_ summary: DiagnosticSummary) {
-        print("""
+        logger.info("""
         Diagnostic Summary:
         - Time Range: \(summary.timeRange)
         - Crashes: \(summary.crashCount)
@@ -160,5 +164,14 @@ extension MetricsViewModel {
         - Disk Write Exceptions: \(summary.diskWriteExceptionCount)
         - CPU Exceptions: \(summary.cpuExceptionCount)
         """)
+    }
+}
+
+// MARK: - Fixed-Point Formatting
+
+extension Double {
+    /// Display text with a fixed number of fraction digits, in the user's locale.
+    func fixed(_ fractionDigits: Int) -> String {
+        formatted(.number.precision(.fractionLength(fractionDigits)))
     }
 }

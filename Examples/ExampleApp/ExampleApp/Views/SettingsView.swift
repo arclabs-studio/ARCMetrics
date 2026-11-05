@@ -16,11 +16,12 @@ struct SettingsView: View {
     // MARK: - View
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         NavigationStack {
             List {
                 Section {
-                    Toggle(isOn: Binding(get: { viewModel.isCollecting },
-                                         set: { _ in viewModel.toggleCollection() })) {
+                    Toggle(isOn: $viewModel.isCollecting) {
                         Label("Collect Metrics", systemImage: "chart.bar.fill")
                     }
                     .tint(.blue)
