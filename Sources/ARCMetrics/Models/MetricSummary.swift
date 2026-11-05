@@ -274,14 +274,24 @@ extension MetricSummary: CustomStringConvertible {
         """
         MetricSummary(
           timeRange: \(timeRange)
-          memory: peak=\(String(format: "%.1f", peakMemoryUsageMB))MB, avg=\(String(format: "%.1f",
-                                                                                    averageMemoryUsageMB))MB
-          cpu: \(String(format: "%.1f", averageCPUPercentage))%
-          hangs: \(String(format: "%.2f", totalHangTimeSeconds))s
-          launch: \(String(format: "%.2f", averageLaunchTimeSeconds))s
-          network: cellular=\(String(format: "%.1f", cellularDownloadMB))MB↓ \(String(format: "%.1f",
-                                                                                      cellularUploadMB))MB↑
+          memory: peak=\(peakMemoryUsageMB.fixed(1))MB, avg=\(averageMemoryUsageMB.fixed(1))MB
+          cpu: \(averageCPUPercentage.fixed(1))%
+          hangs: \(totalHangTimeSeconds.fixed(2))s
+          launch: \(averageLaunchTimeSeconds.fixed(2))s
+          network: cellular=\(cellularDownloadMB.fixed(1))MB↓ \(cellularUploadMB.fixed(1))MB↑
         )
         """
+    }
+}
+
+// MARK: - Fixed-Point Formatting
+
+extension Double {
+    /// Locale-independent fixed-point text, so `description` reads the same everywhere.
+    fileprivate func fixed(_ fractionDigits: Int) -> String {
+        formatted(.number
+            .precision(.fractionLength(fractionDigits))
+            .grouping(.never)
+            .locale(Locale(identifier: "en_US_POSIX")))
     }
 }
