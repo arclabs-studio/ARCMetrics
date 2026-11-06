@@ -225,7 +225,7 @@ ARCMetrics/
 │       └── RecordingSignpostTracer.swift # SignpostTracing test double
 ├── Tests/
 │   └── ARCMetricsTests/
-└── Example/
+└── Examples/
     └── ExampleApp/                       # Interactive demo app
 ```
 
@@ -282,11 +282,11 @@ swift package generate-documentation
 Want to see ARCMetrics in action? Check out the **interactive example app**!
 
 ```bash
-cd Example/ExampleApp
+cd Examples/ExampleApp
 open ExampleApp.xcodeproj
 ```
 
-[**View Example README →**](Example/README.md)
+[**View Example README →**](Examples/README.md)
 
 **Features:**
 - 📊 Dashboard with live metrics

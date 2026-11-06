@@ -95,14 +95,14 @@ Task {
 
 ## Example App
 
-An interactive example app lives at `Example/ExampleApp/`. Open it with:
+An interactive example app lives at `Examples/ExampleApp/`. Open it with:
 ```bash
-cd Example/ExampleApp && open ExampleApp.xcodeproj
+cd Examples/ExampleApp && open ExampleApp.xcodeproj
 ```
 
 To regenerate the Xcode project (if needed):
 ```bash
-cd Example/ExampleApp && xcodegen generate
+cd Examples/ExampleApp && xcodegen generate
 ```
 
 ---
