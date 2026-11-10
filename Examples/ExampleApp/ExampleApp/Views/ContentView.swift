@@ -127,23 +127,23 @@ struct LatestMetricsCard: View {
 
             MetricRow(icon: "memorychip",
                       label: "Peak Memory",
-                      value: "\(String(format: "%.1f", summary.peakMemoryUsageMB)) MB")
-            MetricRow(icon: "cpu", label: "Avg CPU", value: "\(String(format: "%.1f", summary.averageCPUPercentage))%")
+                      value: "\(summary.peakMemoryUsageMB.fixed(1)) MB")
+            MetricRow(icon: "cpu", label: "Avg CPU", value: "\(summary.averageCPUPercentage.fixed(1))%")
             MetricRow(icon: "hourglass",
                       label: "Hang Time",
-                      value: "\(String(format: "%.2f", summary.totalHangTimeSeconds))s")
+                      value: "\(summary.totalHangTimeSeconds.fixed(2))s")
             MetricRow(icon: "timer",
                       label: "Launch Time",
-                      value: "\(String(format: "%.2f", summary.averageLaunchTimeSeconds))s")
+                      value: "\(summary.averageLaunchTimeSeconds.fixed(2))s")
 
             Divider()
 
             MetricRow(icon: "gpu",
                       label: "GPU Time",
-                      value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
+                      value: "\(summary.cumulativeGPUTimeSeconds.fixed(2))s")
             MetricRow(icon: "externaldrive",
                       label: "Disk Writes",
-                      value: "\(String(format: "%.1f", summary.cumulativeDiskWritesMB)) MB")
+                      value: "\(summary.cumulativeDiskWritesMB.fixed(1)) MB")
             MetricRow(icon: "scroll",
                       label: "Hitch Rate",
                       value: summary.hitchTimeRatio

@@ -5,7 +5,10 @@
 //  Created by ARC Labs Studio on 2025-01-12.
 //
 
+import os
 import SwiftUI
+
+private let logger = Logger(subsystem: "com.arclabs.ARCMetrics.ExampleApp", category: "Simulators")
 
 struct SimulatorsView: View {
     // MARK: - Private Properties
@@ -147,7 +150,7 @@ extension SimulatorsView {
             let duration = Date().timeIntervalSince(start)
 
             await MainActor.run {
-                simulationStatus = "Memory pressure simulation completed in \(String(format: "%.1f", duration))s"
+                simulationStatus = "Memory pressure simulation completed in \(duration.fixed(1))s"
                 isSimulating = false
             }
         }
@@ -168,7 +171,7 @@ extension SimulatorsView {
                             result += iteration * threadIndex
                             result = result % 1000
                         }
-                        print("Thread \(threadIndex) result: \(result)")
+                        logger.debug("Thread \(threadIndex) result: \(result)")
                     }
                 }
             }
@@ -176,7 +179,7 @@ extension SimulatorsView {
             let duration = Date().timeIntervalSince(start)
 
             await MainActor.run {
-                simulationStatus = "CPU simulation completed in \(String(format: "%.1f", duration))s"
+                simulationStatus = "CPU simulation completed in \(duration.fixed(1))s"
                 isSimulating = false
             }
         }
@@ -194,7 +197,7 @@ extension SimulatorsView {
             Self.blockCurrentThread(seconds: 1.0)
 
             let duration = Date().timeIntervalSince(start)
-            simulationStatus = "Main thread hang completed (\(String(format: "%.1f", duration))s)"
+            simulationStatus = "Main thread hang completed (\(duration.fixed(1))s)"
             isSimulating = false
         }
     }
@@ -225,7 +228,7 @@ extension SimulatorsView {
             let duration = Date().timeIntervalSince(start)
 
             await MainActor.run {
-                simulationStatus = "Background work completed in \(String(format: "%.1f", duration))s"
+                simulationStatus = "Background work completed in \(duration.fixed(1))s"
                 isSimulating = false
             }
         }
@@ -272,7 +275,7 @@ extension SimulatorsView {
             let duration = Date().timeIntervalSince(start)
 
             await MainActor.run {
-                let durationStr = String(format: "%.1f", duration)
+                let durationStr = duration.fixed(1)
                 simulationStatus = """
                 Network simulation completed in \(durationStr)s
                 Successful: \(successCount), Failed: \(failureCount)
@@ -303,7 +306,7 @@ extension SimulatorsView {
             }
 
             let duration = Date().timeIntervalSince(start)
-            let durationStr = String(format: "%.1f", duration)
+            let durationStr = duration.fixed(1)
             simulationStatus = "GPU simulation completed in \(durationStr)s"
             isSimulating = false
         }
@@ -330,7 +333,7 @@ extension SimulatorsView {
                     totalBytesWritten += dataSize
                     try? fileManager.removeItem(at: fileURL)
                 } catch {
-                    print("Disk write error: \(error)")
+                    logger.error("Disk write error: \(error.localizedDescription, privacy: .public)")
                 }
 
                 await MainActor.run {
@@ -344,8 +347,8 @@ extension SimulatorsView {
             let mbWritten = Double(totalBytesWritten) / (1024 * 1024)
 
             await MainActor.run {
-                let durationStr = String(format: "%.1f", duration)
-                let mbStr = String(format: "%.1f", mbWritten)
+                let durationStr = duration.fixed(1)
+                let mbStr = mbWritten.fixed(1)
                 simulationStatus = """
                 Disk simulation completed in \(durationStr)s
                 Wrote \(mbStr) MB
@@ -376,7 +379,7 @@ extension SimulatorsView {
             }
 
             let duration = Date().timeIntervalSince(start)
-            let durationStr = String(format: "%.1f", duration)
+            let durationStr = duration.fixed(1)
             simulationStatus = "Scroll hitch simulation completed in \(durationStr)s"
             isSimulating = false
         }

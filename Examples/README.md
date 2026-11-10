@@ -19,7 +19,7 @@ If you need to regenerate the Xcode project after modifying `project.yml`:
 
 ```bash
 brew install xcodegen  # if not installed
-cd Example/ExampleApp
+cd Examples/ExampleApp
 xcodegen generate
 ```
 

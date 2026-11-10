@@ -6,7 +6,10 @@
 //
 
 import ARCMetrics
+import os
 import SwiftUI
+
+private let logger = Logger(subsystem: "com.arclabs.ARCMetrics.ExampleApp", category: "App")
 
 @main
 struct ExampleApp: App {
@@ -17,8 +20,8 @@ struct ExampleApp: App {
     // MARK: - Initialization
 
     init() {
-        print("ARCMetrics ExampleApp Started")
-        print("Metrics will be delivered every ~24 hours")
+        logger.info("ARCMetrics ExampleApp started")
+        logger.info("Metrics will be delivered every ~24 hours")
     }
 
     // MARK: - View

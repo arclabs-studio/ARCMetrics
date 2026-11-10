@@ -5,6 +5,22 @@ All notable changes to ARCMetrics will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-11-06
+
+Patch release. No public API change.
+
+### Changed
+
+- **`MetricSummary.description` now formats numbers with a FormatStyle pinned to `en_US_POSIX`**
+  in place of `String(format:)`. The output is meant to stay the same in every locale: one decimal
+  for memory, CPU and cellular network, two for hang and launch time, `.` as the decimal separator
+  and no grouping separators. Code that parses `description` should see the same text for finite
+  values. ([#36](https://github.com/arclabs-studio/ARCMetrics/pull/36))
+- **Examples.** The demo app moved from `Example/` to `Examples/`, the studio convention, and is now linted in CI.
+  It logs with `os.Logger` instead of `print`, formats with FormatStyle, and binds the collection
+  toggle through `@Bindable` instead of `Binding(get:set:)`.
+  ([#35](https://github.com/arclabs-studio/ARCMetrics/pull/35), [#36](https://github.com/arclabs-studio/ARCMetrics/pull/36))
+
 ## [2.1.0] - 2026-10-09
 
 Additive: spans that carry attributes, parent links and outcomes, for backends such as ARCMetricsOTel. `SignpostTracing` is unchanged. Guide: [Tracing with Attributes](Sources/ARCMetrics/ARCMetrics.docc/Articles/TracingWithAttributes.md).
@@ -166,5 +182,6 @@ Everything below predates the 1.0.0 baseline. The version numbers are retained f
 
 ---
 
+[2.1.0]: https://github.com/arclabs-studio/ARCMetrics/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/arclabs-studio/ARCMetrics/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/arclabs-studio/ARCMetrics/releases/tag/v1.0.0

@@ -129,9 +129,9 @@ struct MetricSummaryRow: View {
                 .foregroundColor(.secondary)
 
             HStack(spacing: 16) {
-                MetricBadge(label: "Memory", value: "\(String(format: "%.0f", summary.peakMemoryUsageMB))MB")
-                MetricBadge(label: "CPU", value: "\(String(format: "%.0f", summary.averageCPUPercentage))%")
-                MetricBadge(label: "Hangs", value: "\(String(format: "%.1f", summary.totalHangTimeSeconds))s")
+                MetricBadge(label: "Memory", value: "\(summary.peakMemoryUsageMB.fixed(0))MB")
+                MetricBadge(label: "CPU", value: "\(summary.averageCPUPercentage.fixed(0))%")
+                MetricBadge(label: "Hangs", value: "\(summary.totalHangTimeSeconds.fixed(1))s")
             }
             .font(.caption2)
         }
@@ -201,25 +201,25 @@ struct MetricDetailView: View {
             }
 
             Section("Memory") {
-                DetailRow(label: "Peak Memory", value: "\(String(format: "%.2f", summary.peakMemoryUsageMB)) MB")
+                DetailRow(label: "Peak Memory", value: "\(summary.peakMemoryUsageMB.fixed(2)) MB")
                 DetailRow(label: "Average Suspended",
-                          value: "\(String(format: "%.2f", summary.averageMemoryUsageMB)) MB")
+                          value: "\(summary.averageMemoryUsageMB.fixed(2)) MB")
             }
 
             Section("CPU") {
                 DetailRow(label: "Cumulative Time",
-                          value: "\(String(format: "%.2f", summary.cumulativeCPUTimeSeconds))s")
+                          value: "\(summary.cumulativeCPUTimeSeconds.fixed(2))s")
                 DetailRow(label: "Average Percentage",
-                          value: "\(String(format: "%.2f", summary.averageCPUPercentage))%")
+                          value: "\(summary.averageCPUPercentage.fixed(2))%")
             }
 
             Section("GPU") {
                 DetailRow(label: "Cumulative GPU Time",
-                          value: "\(String(format: "%.2f", summary.cumulativeGPUTimeSeconds))s")
+                          value: "\(summary.cumulativeGPUTimeSeconds.fixed(2))s")
             }
 
             Section("Disk I/O") {
-                DetailRow(label: "Disk Writes", value: "\(String(format: "%.2f", summary.cumulativeDiskWritesMB)) MB")
+                DetailRow(label: "Disk Writes", value: "\(summary.cumulativeDiskWritesMB.fixed(2)) MB")
             }
 
             Section("Animation") {
@@ -229,20 +229,20 @@ struct MetricDetailView: View {
             }
 
             Section("Responsiveness") {
-                DetailRow(label: "Total Hang Time", value: "\(String(format: "%.3f", summary.totalHangTimeSeconds))s")
-                DetailRow(label: "Launch Time", value: "\(String(format: "%.3f", summary.averageLaunchTimeSeconds))s")
+                DetailRow(label: "Total Hang Time", value: "\(summary.totalHangTimeSeconds.fixed(3))s")
+                DetailRow(label: "Launch Time", value: "\(summary.averageLaunchTimeSeconds.fixed(3))s")
             }
 
             Section("Usage Time") {
-                DetailRow(label: "Foreground Time", value: "\(String(format: "%.1f", summary.foregroundTimeSeconds))s")
-                DetailRow(label: "Background Time", value: "\(String(format: "%.1f", summary.backgroundTimeSeconds))s")
+                DetailRow(label: "Foreground Time", value: "\(summary.foregroundTimeSeconds.fixed(1))s")
+                DetailRow(label: "Background Time", value: "\(summary.backgroundTimeSeconds.fixed(1))s")
             }
 
             Section("Network") {
-                DetailRow(label: "Cellular Download", value: "\(String(format: "%.2f", summary.cellularDownloadMB)) MB")
-                DetailRow(label: "Cellular Upload", value: "\(String(format: "%.2f", summary.cellularUploadMB)) MB")
-                DetailRow(label: "WiFi Download", value: "\(String(format: "%.2f", summary.wifiDownloadMB)) MB")
-                DetailRow(label: "WiFi Upload", value: "\(String(format: "%.2f", summary.wifiUploadMB)) MB")
+                DetailRow(label: "Cellular Download", value: "\(summary.cellularDownloadMB.fixed(2)) MB")
+                DetailRow(label: "Cellular Upload", value: "\(summary.cellularUploadMB.fixed(2)) MB")
+                DetailRow(label: "WiFi Download", value: "\(summary.wifiDownloadMB.fixed(2)) MB")
+                DetailRow(label: "WiFi Upload", value: "\(summary.wifiUploadMB.fixed(2)) MB")
             }
         }
         .navigationTitle("Metric #\(index + 1)")
@@ -293,7 +293,7 @@ struct DiagnosticDetailView: View {
             if !summary.hangs.isEmpty {
                 Section("Hang Details") {
                     ForEach(Array(summary.hangs.enumerated()), id: \.offset) { hangIndex, hang in
-                        DetailRow(label: "Hang #\(hangIndex + 1)", value: "\(String(format: "%.3f", hang.duration))s")
+                        DetailRow(label: "Hang #\(hangIndex + 1)", value: "\(hang.duration.fixed(3))s")
                     }
                 }
             }
